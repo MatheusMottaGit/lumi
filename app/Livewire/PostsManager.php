@@ -2,29 +2,46 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Storage;
+use Aws\S3\S3Client;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Request;
 
 class PostsManager extends Component
 {
     use WithFileUploads;
 
-    public $canvaFile;
-    public $canvaFilePreview;
+    public $canvaFiles = [];
     public $steps = 4;
+    public $currentStep = 1;
 
-    public function previewCanvaFile() {
+    public function nextStep() {
+        if ($this->currentStep < $this->steps) {
+            $this->currentStep++;
+        }
+    }
+
+    public function prevStep() {
+        if($this->currentStep > 1) {
+            $this->currentStep--;         
+        }
+    }
+
+    public function handleCanvaFile() {
         $this->validate([
-            'canvaFilePreview' => 'image|mimes:png,jpg,jpeg|max:1024'
+            'canvaFiles.*' => 'image|mimes:png,jpg,jpeg|max:1024'
         ]);
     }
 
-    public function uploadCanvaFile(Request $request) {}
-    public function splitCanvaFile(Request $request) {}
-    public function generatePostSubtitle(Request $request) {}
-    public function postInstagramCarousel(Request $request) {}
+    public function splitUploadS3CanvaFile() {
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION')
+        ]);
+
+        
+    }
+    public function generatePostSubtitle() {}
+    public function postInstagramCarousel() {}
 
     public function render()
     {
