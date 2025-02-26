@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Aws\S3\S3Client;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Intervention\Image\Laravel\Facades\Image;
 
 class PostsManager extends Component
 {
@@ -32,13 +33,30 @@ class PostsManager extends Component
         ]);
     }
 
-    public function splitUploadS3CanvaFile() {
+    public function splitUploadS3CanvaFile($file) {
         $s3 = new S3Client([
             'version' => 'latest',
             'region' => env('AWS_DEFAULT_REGION')
         ]);
 
-        
+        $image = Image::make($file);
+        $fullFileWidth = $image->width();
+        $fullFileHeight = $image->height();
+
+        $imagesQuantity = 6;
+        $eachImageWidth = $fullFileWidth / $imagesQuantity;
+
+        for ($i=0; $i < $imagesQuantity; $i++) { 
+            $cloned = clone $image;
+            $cloned->crop($eachImageWidth, $fullFileHeight, $eachImageWidth * $i, 0);
+            $stream = $cloned->enconde('png');
+
+            $filePath = "posts/slide_{$i}.png";
+
+            $s3->putObject([
+                ''
+            ]);
+        }
     }
     public function generatePostSubtitle() {}
     public function postInstagramCarousel() {}
