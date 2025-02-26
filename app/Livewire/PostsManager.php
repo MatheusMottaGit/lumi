@@ -5,7 +5,6 @@ namespace App\Livewire;
 use Aws\S3\S3Client;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Intervention\Image\Laravel\Facades\Image;
 
 class PostsManager extends Component
 {
@@ -14,6 +13,8 @@ class PostsManager extends Component
     public $canvaFiles = [];
     public $steps = 4;
     public $currentStep = 1;
+    public $splitting = false;
+    public $splittedImages = [];
 
     public function nextStep() {
         if ($this->currentStep < $this->steps) {
@@ -33,32 +34,67 @@ class PostsManager extends Component
         ]);
     }
 
-    public function splitUploadS3CanvaFile($file) {
+    public function splitUploadS3CanvaFile() {
+        $this->splitting = true;
+
         $s3 = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION')
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY')
+            ]
         ]);
 
-        $image = Image::make($file);
-        $fullFileWidth = $image->width();
-        $fullFileHeight = $image->height();
+        foreach ($this->canvaFiles as $file) {
+            $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
+            $fullFileWidth = imagesx($image);
+            $fullFileHeight = imagesy($image);
 
-        $imagesQuantity = 6;
-        $eachImageWidth = $fullFileWidth / $imagesQuantity;
+            $imagesQuantity = 6;
+            $eachImageWidth = $fullFileWidth / $imagesQuantity;
 
-        for ($i=0; $i < $imagesQuantity; $i++) { 
-            $cloned = clone $image;
-            $cloned->crop($eachImageWidth, $fullFileHeight, $eachImageWidth * $i, 0);
-            $stream = $cloned->enconde('png');
+            for ($i=0; $i < $imagesQuantity; $i++) { 
+                $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
+                imagecopy(
+                    $cloned,
+                    $image,
+                    0,
+                    0,
+                    $eachImageWidth * $i,
+                    0,
+                    $eachImageWidth,
+                    $fullFileHeight
+                );
 
-            $filePath = "posts/slide_{$i}.png";
+                ob_start();
+                imagepng($cloned);
+                $stream = ob_get_clean();
+                $filePath = "posts/split_{$i}.png";
+                $this->splittedImages[] = $stream;
 
-            $s3->putObject([
-                ''
-            ]);
+                try {
+                    $s3->putObject([
+                        'Bucket' => env("AWS_BUCKET"),
+                        'Key' => $filePath,
+                        'Body' => $stream,
+                        'ACL' => 'public-read'
+                    ]);
+
+                    dd("upload worked!");
+                } catch (Aws\S3\Exception\S3Exception $e) {
+                    dd($e);
+                }
+
+                imagedestroy($cloned);
+            }
+            imagedestroy($image);
+            $this->splitting = false;
         }
     }
+
     public function generatePostSubtitle() {}
+
     public function postInstagramCarousel() {}
 
     public function render()
