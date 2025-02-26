@@ -78,7 +78,6 @@ class PostsManager extends Component
                         'Bucket' => env("AWS_BUCKET"),
                         'Key' => $filePath,
                         'Body' => $stream,
-                        'ACL' => 'public-read'
                     ]);
 
                     dd("upload worked!");
