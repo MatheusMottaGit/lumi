@@ -13,8 +13,21 @@ class PostsManager extends Component
     public $canvaFiles = [];
     public $steps = 4;
     public $currentStep = 1;
-    public $splitting = false;
-    public $splittedImages = [];
+    public $prompt = "";
+    public $chatCompletionResponse = "";
+    public $splittedImagesPreview = [];
+    private $s3;
+
+    public function __construct() {
+        $this->s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY')
+            ]
+        ]);
+    }
 
     public function nextStep() {
         if ($this->currentStep < $this->steps) {
@@ -35,16 +48,7 @@ class PostsManager extends Component
     }
 
     public function splitUploadS3CanvaFile() {
-        $this->splitting = true;
-
-        $s3 = new S3Client([
-            'version' => 'latest',
-            'region' => env('AWS_DEFAULT_REGION'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY')
-            ]
-        ]);
+        $this->dispatch('startSplitting');
 
         foreach ($this->canvaFiles as $file) {
             $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
@@ -69,18 +73,15 @@ class PostsManager extends Component
 
                 ob_start();
                 imagepng($cloned);
-                $stream = ob_get_clean();
+                $imageRealContent = ob_get_clean();
                 $filePath = "posts/split_{$i}.png";
-                $this->splittedImages[] = $stream;
-
+                
                 try {
-                    $s3->putObject([
+                    $this->s3->putObject([
                         'Bucket' => env("AWS_BUCKET"),
                         'Key' => $filePath,
-                        'Body' => $stream,
-                    ]);
-
-                    dd("upload worked!");
+                        'Body' => $imageRealContent,
+                    ]);        
                 } catch (Aws\S3\Exception\S3Exception $e) {
                     dd($e);
                 }
@@ -88,8 +89,25 @@ class PostsManager extends Component
                 imagedestroy($cloned);
             }
             imagedestroy($image);
-            $this->splitting = false;
         }
+        $this->dispatch('stopSplitting');
+        dd("uploaded!");
+    }
+
+    public function showUploadedFiles() {
+        try {
+            $images = $this->s3->listObjectsV2([
+                'Bucket' => env("AWS_BUCKET")
+            ]);
+
+            foreach ($images['Contents'] as $img) {
+                $this->splittedImagesPreview[] = env("AWS_BUCKET_URL") . $img['Key'];
+            }
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            dd($e);
+        }
+
+        // dd($this->splittedImagesPreview);
     }
 
     public function generatePostSubtitle() {}

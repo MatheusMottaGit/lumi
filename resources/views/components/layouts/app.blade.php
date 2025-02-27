@@ -11,7 +11,7 @@
     @vite("resources/css/app.css")
 </head>
 <body style="font-family: Inter">
-  <main class="min-h-screen bg-slate-950 flex items-center justify-center">
+  <main class="min-h-screen bg-gray-950 flex items-center justify-center">
     @livewire('posts-manager')
     @livewireScripts
   </main>
