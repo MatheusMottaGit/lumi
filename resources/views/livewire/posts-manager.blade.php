@@ -77,31 +77,65 @@
                 </div>
             </header>
         
-            <div class="w-full flex gap-3 mt-4 px-4 pb-4">
-                <div class="p-3 rounded-xl bg-gray-900/20 border border-dashed border-gray-800 shadow flex items-center justify-center w-1/2">
-                    <button type="button" wire:click="showUploadedFiles" class="cursor-pointer px-4 py-2 flex items-center justify-center gap-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
+            
+            <div class="flex flex-col w-full gap-4 mt-4 px-4 pb-4">
+                <textarea wire:model="prompt" class="bg-gray-900/30 text-gray-400 text-base p-3 rounded-lg border border-gray-800 outline-none focus:ring-2 focus:ring-sky-700 transition" placeholder="Enter prompt..."></textarea>
+                
+                <textarea disabled wire:model="chatCompletionResponse" placeholder="AI response..." class="h-48 cursor-not-allowed resize-none bg-gray-900/30 text-gray-400 text-base p-3 rounded-lg border border-gray-800 outline-none"></textarea>
+                
+                <button type="button" wire:click="generatePostSubtitle" class="px-4 py-2 flex items-center justify-center gap-2 bg-sky-900 text-gray-200 rounded-lg hover:bg-sky-900 transition">
+                    Generate <img src="{{ url('svg/wand-sparkles.svg') }}" class="w-5 h-5">
+                </button>
+            </div>
+        @endif
+
+        @if ($currentStep === 4)
+            <header class="w-full flex items-center justify-start gap-4 border-b border-b-gray-800 bg-gray-900/20 px-4 py-3">
+                <img src="{{ url('svg/instagram.svg') }}" class="w-8 h-8">
+                
+                <div class="space-y-0.5">
+                    <h2 class="text-xl text-gray-100 font-semibold">Post on Instagram</h2>
+                    <p class="text-md text-gray-500">Just finish the last details to get your post done!</p>
+                </div>
+            </header>
+
+            <div class="w-full px-4 mt-4 pb-4">
+                <div class="p-4 rounded-xl bg-gray-900/30 border border-dashed border-gray-800 shadow-md flex flex-col items-center justify-center w-full h-72">
+                    <button type="button" wire:click="showUploadedFiles" class="px-4 py-2 flex items-center gap-2 bg-sky-800 text-gray-200 rounded-lg hover:bg-sky-900 transition">
                         See files <img src="{{ url('svg/search.svg') }}" class="w-5 h-5">
                     </button>
+            
+                    @if ($openImagesModal)
+                        <div class="bg-black/40 fixed w-full h-full inset-0 flex justify-center items-center z-50">
+                            <div class="relative bg-gray-950 w-3/4 max-w-4xl h-3/4 rounded-lg border border-gray-800 p-6 shadow-lg overflow-auto">
+                                <div class="grid grid-cols-3 md:grid-cols-4 gap-4 justify-center">
+                                    @foreach ($splittedImagesPreview as $index => $img)
+                                        @if (!empty($img))
+                                            <div class="flex flex-col items-center">
+                                                <img src="{{ $img }}" class="rounded-md w-32 h-32 object-cover border border-gray-700">
+                                                <input type="number" 
+                                                    wire:model="imageOrder.{{ $index }}" 
+                                                    class="mt-2 p-2 w-16 text-center bg-gray-800 text-gray-200 border border-gray-700 rounded-md focus:ring-2 focus:ring-sky-500"
+                                                    min="1" 
+                                                    max="{{ count($splittedImagesPreview) }}"
+                                                >
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
 
-                    @if (!empty($splittedImagesPreview))
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach ($splittedImagesPreview as $img)
-                                @if (!empty($img))
-                                    <img src="{{ $img }}" class="rounded-md w-20 h-20 object-cover">
-                                @endif
-                            @endforeach
+                                <div class="mt-4 flex justify-center">
+                                    <button type="button" 
+                                            wire:click="saveImageOrder"
+                                            class="px-4 py-2 bg-sky-800 text-gray-200 rounded-lg hover:bg-sky-900 transition">
+                                        Save Order
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
-        
-                <div class="w-full flex flex-col gap-3">
-                    <input wire:model="prompt" type="text" class="bg-gray-900/20 text-gray-200 text-base p-2 rounded-md border border-gray-800 outline-none" placeholder="Enter prompt...">
-                    <textarea disabled value="{{ $chatCompletionResponse }}" class="cursor-not-allowed resize-none bg-gray-900/20 text-gray-200 text-base p-2 rounded-md border border-gray-800 outline-none" rows="8" placeholder="AI response..."></textarea>
-                    <button type="button" wire:click="nextStep" class="cursor-pointer px-4 py-2 flex items-center justify-center gap-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
-                        Generate <img src="{{ url('svg/wand-sparkles.svg') }}" class="w-5 h-5">
-                    </button>
-                </div>
-            </div> 
+            </div>
         @endif
     </div>
     
@@ -110,3 +144,12 @@
         <button type="button" wire:click="nextStep" class="cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">Next</button>
     </div>
 </form>   
+
+{{-- Gere uma legenda para um post no Instagram sobre WebSockets, seguindo este estilo: um tom casual e engajador, explicando de forma simples o que são WebSockets e onde são usados. Inclua emojis para tornar o texto mais dinâmico e finalize incentivando o engajamento. Exemplo de estrutura desejada:
+
+Comece com uma chamada envolvente para o leitor.
+Explique brevemente o que são WebSockets.
+Dê exemplos de uso comuns.
+Destaque a importância para desenvolvedores.
+Finalize com um CTA para acompanhar mais conteúdos sobre desenvolvimento web
+Não seja tão prolixo, e não tão descontraído. Use emojis de forma pontual. --}}

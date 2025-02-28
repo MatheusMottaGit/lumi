@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Aws\S3\S3Client;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use OpenAI;
 
 class PostsManager extends Component
 {
@@ -12,10 +13,11 @@ class PostsManager extends Component
 
     public $canvaFiles = [];
     public $steps = 4;
-    public $currentStep = 1;
+    public $currentStep = 4;
     public $prompt = "";
     public $chatCompletionResponse = "";
     public $splittedImagesPreview = [];
+    public $openImagesModal = false;
     private $s3;
 
     public function __construct() {
@@ -95,12 +97,14 @@ class PostsManager extends Component
     }
 
     public function showUploadedFiles() {
+        $this->openImagesModal = true;
+        
         try {
             $images = $this->s3->listObjectsV2([
                 'Bucket' => env("AWS_BUCKET")
             ]);
 
-            foreach ($images['Contents'] as $img) {
+            foreach (array_slice($images['Contents'], 1) as $img) {
                 $this->splittedImagesPreview[] = env("AWS_URL") . $img['Key'];
             }
         } catch (Aws\S3\Exception\S3Exception $e) {
@@ -110,7 +114,24 @@ class PostsManager extends Component
         // dd($this->splittedImagesPreview);
     }
 
-    public function generatePostSubtitle() {}
+    public function generatePostSubtitle() {
+        $this->dispatch("gerenatingCompletion");
+
+        $openAI = OpenAI::client(env("OPENAI_API_KEY"));
+
+        $completion = $openAI->chat()->create([
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'user', 'content' => $this->prompt]
+            ]
+        ]);
+
+        $this->chatCompletionResponse = $completion->choices[0]->message->content;
+
+        // dd($this->chatCompletionResponse);
+
+        $this->dispatch("doneCompletion");
+    }
 
     public function postInstagramCarousel() {}
 
