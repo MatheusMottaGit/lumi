@@ -13,11 +13,12 @@ class PostsManager extends Component
 
     public $canvaFiles = [];
     public $steps = 4;
-    public $currentStep = 4;
+    public $currentStep = 1;
     public $prompt = "";
     public $chatCompletionResponse = "";
     public $splittedImagesPreview = [];
     public $openImagesModal = false;
+    public $imageOrder = [];
     private $s3;
 
     public function __construct() {
