@@ -101,7 +101,7 @@ class PostsManager extends Component
             ]);
 
             foreach ($images['Contents'] as $img) {
-                $this->splittedImagesPreview[] = env("AWS_BUCKET_URL") . $img['Key'];
+                $this->splittedImagesPreview[] = env("AWS_URL") . $img['Key'];
             }
         } catch (Aws\S3\Exception\S3Exception $e) {
             dd($e);
