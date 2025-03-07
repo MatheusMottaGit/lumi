@@ -16,24 +16,34 @@
     </button>
 
     @if ($openImagesModal)
-    <div class="bg-black/40 fixed w-full h-full inset-0 flex justify-center items-center z-50">
-      <div
-        class="relative bg-gray-950 w-11/12 max-w-4xl h-3/4 rounded-lg border border-gray-800 p-6 shadow-lg overflow-auto">
-        <div class="mb-6">
-          <h2 class="text-lg font-semibold text-gray-300">Organize as Imagens</h2>
-          <p class="text-gray-400 text-sm mt-1">
-            Arrume as imagens definindo sua posição numérica. A posição menor será exibida primeiro.
-          </p>
-        </div>
+      <div class="bg-black/40 fixed w-full h-full inset-0 flex justify-center items-center z-50">
+        <div class="relative bg-gray-950 w-11/12 max-w-4xl h-3/4 rounded-lg border border-gray-800 p-6 shadow-lg overflow-auto">
+          <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-300">Organize as Imagens</h2>
+            <p class="text-gray-400 text-sm mt-1">
+              Selecione as imagens que deseja adicionar ao array.
+            </p>
+          </div>
 
-        <div class="mt-6 flex justify-center">
-          <button type="button" wire:click="saveImageOrder"
-            class="px-5 py-2 bg-sky-700 text-gray-200 font-medium rounded-lg hover:bg-sky-800 transition shadow-md">
-            Salvar Ordem
-          </button>
+          <div class="grid grid-cols-3 md:grid-cols-4 gap-4">
+            @foreach ($imageOrder as $image)
+              <div class="relative cursor-pointer">
+                <img src="{{ $image }}" class="w-full h-32 object-cover rounded-lg border {{ in_array($image, $selectedImages) ? 'border-sky-500' : 'border-gray-700' }}">
+
+                <div class="absolute top-2 right-2">
+                  <input type="checkbox" wire:model="selectedImages" value="{{ $image }}" class="w-5 h-5 text-sky-600 bg-gray-900 border-gray-700 rounded focus:ring-0">
+                </div>
+              </div>
+            @endforeach
+          </div>
+
+          <div class="mt-6 flex justify-center">
+            <button type="button" wire:click="saveSelection" class="px-5 py-2 bg-sky-700 text-gray-200 font-medium rounded-lg hover:bg-sky-800 transition shadow-md">
+              Salvar Seleção
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     @endif
   </div>
 </div>

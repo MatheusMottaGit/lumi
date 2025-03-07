@@ -21,7 +21,8 @@
         <button 
             type="button" 
             wire:click="prevStep" 
-            class="cursor-pointer mt-4 px-4 py-2 bg-gray-900/20 border border-gray-800 text-gray-200 rounded-md hover:bg-gray-950"
+            disabled="{{ $currentStep === 1 }}"
+            class="{{ $currentStep === 1 ? 'cursor-not-allowed opacity-50' : ''}} cursor-pointer mt-4 px-4 py-2 bg-gray-900/20 border border-gray-800 text-gray-200 rounded-md hover:bg-gray-950"
         >
             Go back
         </button>
@@ -31,7 +32,7 @@
             wire:click="nextStep" 
             class="cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950"
         >
-            Next
+            {{ $currentStep === 4 ? 'Next' : 'Post to Instagram'}}
         </button>
     </div>
 </form>   
