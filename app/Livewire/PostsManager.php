@@ -14,12 +14,24 @@ class PostsManager extends Component
 
     public $canvaFiles = [];
     public $steps = 4;
-    public $currentStep = 1;
+    public $currentStep = 4;
     public $prompt = "";
     public $chatCompletionResponse = "";
     public $splittedImagesPreview = [];
     public $openImagesModal = false;
     public $imageOrder = [];
+    private $s3;
+
+    public function __construct() {
+        $this->s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY')
+            ]
+        ]);
+    }
 
     public function nextStep() {
         if ($this->currentStep < $this->steps) {
@@ -33,6 +45,14 @@ class PostsManager extends Component
         }
     }
 
+    public function toggleSelection($image) {
+        if (in_array($image, $this->imageOrder)) {
+            $this->imageOrder = array_diff($this->imageOrder, [$image]);
+        }else{
+            $this->imageOrder[] = $image;
+        }
+    }
+
     public function handleCanvaFile() {
         $this->validate([
             'canvaFiles.*' => 'image|mimes:png,jpg,jpeg|max:1024'
@@ -42,25 +62,126 @@ class PostsManager extends Component
     public function splitUploadS3CanvaFile() {
         $this->dispatch('startSplitting');
 
-        
+        foreach ($this->canvaFiles as $file) {
+            $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
+            $fullFileWidth = imagesx($image);
+            $fullFileHeight = imagesy($image);
+
+            $imagesQuantity = 6;
+            $eachImageWidth = $fullFileWidth / $imagesQuantity;
+
+            for ($i=0; $i < $imagesQuantity; $i++) { 
+                $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
+                imagecopy(
+                    $cloned,
+                    $image,
+                    0,
+                    0,
+                    $eachImageWidth * $i,
+                    0,
+                    $eachImageWidth,
+                    $fullFileHeight
+                );
+
+                ob_start();
+                imagepng($cloned);
+                $imageRealContent = ob_get_clean();
+                $filePath = "posts/split_{$i}.png";
+                
+                try {
+                    $this->s3->putObject([
+                        'Bucket' => env("AWS_BUCKET"),
+                        'Key' => $filePath,
+                        'Body' => $imageRealContent,
+                    ]);        
+                } catch (Aws\S3\Exception\S3Exception $e) {
+                    dd($e);
+                }
+
+                imagedestroy($cloned);
+            }
+            imagedestroy($image);
+        }
         $this->dispatch('stopSplitting');
-        // dd("uploaded!");
+        dd("uploaded!");
     }
 
     public function showUploadedFiles() {
         $this->openImagesModal = true;
+        
+        try {
+            $images = $this->s3->listObjectsV2([
+                'Bucket' => env("AWS_BUCKET")
+            ]);
+
+            foreach (array_slice($images['Contents'], 1) as $img) {
+                $this->splittedImagesPreview[] = env("AWS_URL") . $img['Key'];
+            }
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            dd($e);
+        }
+
+        // dd($this->splittedImagesPreview);
     }
 
     public function generatePostSubtitle() {
         $this->dispatch("gerenatingCompletion");
 
+        $openAI = OpenAI::client(env("OPENAI_API_KEY"));
+
+        $completion = $openAI->chat()->create([
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'user', 'content' => $this->prompt]
+            ]
+        ]);
+
+        $this->chatCompletionResponse = $completion->choices[0]->message->content;
+
+        // dd($this->chatCompletionResponse);
+
         $this->dispatch("doneCompletion");
     }
-
     public function postInstagramCarousel() {
+        $itensID = [];
+
         // create an item container
-        // create the carousel container
-        // publish the carousel container
+        foreach ($this->imageOrder as $image) {
+            $response = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
+                'is_carousel_item' => true,
+                'image_url' => $image,
+                'access_token' => env("GRAPH_ACCESS_TOKEN")
+            ]);
+
+            if ($response->successful()) {
+                $itensID[] = $response->json()['id'];
+            }else{
+                dd("Error on creating carousel.", $response->json());
+            }
+        }
+
+        // create carousel container
+        $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
+            'media_type' => 'CAROUSEL',
+            'children' => $itensID,
+            'access_token' => env("GRAPH_ACCESS_TOKEN")
+        ]);
+
+        if (!$containerResponse->successful()) {
+            dd("Error on creating carousel.", $response->json());
+        }
+
+        // publish carousel container
+        $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media_publish", [
+            'creation_id' => $containerResponse->json()['id'],
+            'access_token' => env("GRAPH_ACCESS_TOKEN")
+        ]);
+
+        if ($carouselResponse->successful()) {
+            dd("Carousel is now on your profile! Go check!");
+        }else{
+            dd("Error on creating carousel.", $carouselResponse->json());
+        }
     }
 
     public function render()
