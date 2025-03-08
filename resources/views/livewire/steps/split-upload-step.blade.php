@@ -16,13 +16,12 @@
         @endforeach
 
         <div class="w-full pb-4">
-            <button type="button" wire:click="splitUploadS3CanvaFile"
-                class="w-full cursor-pointer px-4 py-2 bg-sky-800 flex items-center justify-center gap-2 text-gray-200 rounded-md hover:bg-sky-950 transition"
-                wire:loading.class="opacity-50 cursor-not-allowed" wire:loading.attr="disabled">
-                <img src="{{ url('svg/loader-circle.svg') }}" class="w-5 h-5 animate-spin" wire:loading
-                    wire:target="splitUploadS3CanvaFile">
+            <button type="button" wire:click="splitUploadS3CanvaFile" class="w-full cursor-pointer px-4 py-2 bg-sky-800 flex items-center justify-center gap-2 text-gray-200 rounded-md hover:bg-sky-950 transition" wire:loading.class="opacity-50 cursor-not-allowed" wire:loading.attr="disabled">
+                <img src="{{ url('svg/loader-circle.svg') }}" class="w-5 h-5 animate-spin" wire:loading wire:target="splitUploadS3CanvaFile">
                 <img src="{{ url('svg/scissors.svg') }}" class="w-5 h-5" wire:loading.remove>
-                <span wire:loading.remove>Split ({{ count($canvaFiles) }})</span>
+                <span wire:loading.remove>
+                    Split ({{ count($canvaFiles) }})
+                </span>
             </button>
         </div>
     </div>

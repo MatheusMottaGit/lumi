@@ -3,6 +3,7 @@
 namespace App\Livewire\Steps;
 
 use Livewire\Component;
+use OpenAI;
 
 class ChatCompletionStep extends Component
 {
@@ -22,10 +23,10 @@ class ChatCompletionStep extends Component
         ]);
 
         $this->chatCompletionResponse = $completion->choices[0]->message->content;
-
-        // dd($this->chatCompletionResponse);
-
+        
         $this->dispatch("doneCompletion");
+
+        $this->emit('generatedCompletion', $this->chatCompletionResponse);
     }
     
     public function render()

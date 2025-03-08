@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Steps;
 
+use Aws\S3\S3Client;
 use Livewire\Component;
 
 class PostCarouselStep extends Component
@@ -9,6 +10,24 @@ class PostCarouselStep extends Component
     public $splittedImagesPreview = [];
     public $imageOrder = [];
     public $openImagesModal = false;
+    public $chatCompletionResponse = "";
+    protected $listeners = ['generatedCompletion' => 'handleAIResponse'];
+    private $s3;
+
+    public function __construct() {
+        $this->s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY')
+            ]
+        ]);
+    }
+
+    public function handleAIResponse($response) {
+        $this->chatCompletionResponse = $response;
+    }
     
     public function showUploadedFiles() {
         $this->openImagesModal = true;

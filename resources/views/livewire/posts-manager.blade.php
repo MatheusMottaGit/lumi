@@ -1,18 +1,16 @@
 <form wire:submit.prevent="postInstagramCarousel" class="flex flex-col justify-center items-center w-2/4">
     <div class="bg-gray-950 border border-gray-800 rounded-xl shadow-lg w-full flex flex-col items-center justify-center">
         @if ($currentStep === 1)
-            @livewire('steps.browse-file-step', [
-                'canvaFiles' => $canvaFiles
-            ])
+            <x-blade.steps.browse-file-step 
+                :canvaFiles="$canvaFiles" 
+            />
         @elseif ($currentStep === 2)
             @livewire('steps.split-upload-step', [
                 'canvaFiles' => $canvaFiles
             ])
         @elseif ($currentStep === 3)
-            @livewire('steps.chat-completion-step', [
-                'prompt' => $prompt, 
-                'chatCompletionResponse' => $chatCompletionResponse
-            ])
+            @livewire('steps.chat-completion-step')
+            
         @elseif ($currentStep === 4)
             @livewire('steps.post-carousel-step', [
                 'splittedImagesPreview' => $splittedImagesPreview, 
@@ -27,14 +25,8 @@
             Go back
         </button>
 
-        @if($currentStep === 4)
-            <button type="button" wire:click="postInstagramCarousel" class="cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
-                Post to Instagram
-            </button>
-        @else
-            <button type="button" wire:click="nextStep" class="cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
-                Next
-            </button>
-        @endif
+        <button type="button" wire:click="nextStep" disabled="{{ $currentStep === 4 }}" class="{{ $currentStep === 4 ? 'cursor-not-allowed opacity-50' : '' }} cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
+            Next
+        </button>
     </div>
 </form>

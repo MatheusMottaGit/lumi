@@ -1,11 +1,24 @@
 <?php
 
 namespace App\Livewire\Steps;
+use Aws\S3\S3Client;
 use Livewire\Component;
 
 class SplitUploadStep extends Component
 {
     public $canvaFiles = [];
+    private $s3;
+
+    public function __construct() {
+        $this->s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY')
+            ]
+        ]);
+    }
 
     public function splitUploadS3CanvaFile() {
         $this->dispatch('startSplitting');
@@ -52,6 +65,10 @@ class SplitUploadStep extends Component
         }
         $this->dispatch('stopSplitting');
         // dd("uploaded!");
+    }
+
+    public function mount($canvaFiles) {
+        $this->canvaFiles = $canvaFiles;
     }
     
     public function render()
