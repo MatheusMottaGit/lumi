@@ -3,6 +3,7 @@
 namespace App\Livewire\Steps;
 
 use Aws\S3\S3Client;
+use Http;
 use Livewire\Component;
 
 class PostCarouselStep extends Component
@@ -57,7 +58,7 @@ class PostCarouselStep extends Component
     }
 
     public function postInstagramCarousel() {
-        $itensID = [];
+        $itemsID = [];
 
         // create an item container
         foreach ($this->imageOrder as $image) {
@@ -68,35 +69,35 @@ class PostCarouselStep extends Component
             ]);
 
             if ($response->successful()) {
-                $itensID[] = $response->json()['id'];
+                $itemsID[] = $response->json()['id'];
             }else{
                 dd("Error on creating carousel.", $response->json());
             }
         }
-        dd($itensID);
 
-        // create carousel container
-        // $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
-        //     'media_type' => 'CAROUSEL',
-        //     'children' => $itensID,
-        //     'access_token' => env("GRAPH_ACCESS_TOKEN")
-        // ]);
+        // create carousel container with items
+        $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
+            'media_type' => 'CAROUSEL',
+            'children' => $itemsID,
+            'access_token' => env("GRAPH_ACCESS_TOKEN")
+        ]);
 
-        // if (!$containerResponse->successful()) {
-        //     dd("Error on creating carousel.", $response->json());
-        // }
+        if (!$containerResponse->successful()) {
+            dd("Error on creating carousel.", $response->json());
+        }
 
-        // publish carousel container
-        // $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media_publish", [
-        //     'creation_id' => $containerResponse->json()['id'],
-        //     'access_token' => env("GRAPH_ACCESS_TOKEN")
-        // ]);
+        // publish complete carousel container
+        $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media_publish", [
+            'creation_id' => $containerResponse->json()['id'],
+            'caption' => 'Apenas aguarde. 👀',
+            'access_token' => env("GRAPH_ACCESS_TOKEN")
+        ]);
 
-        // if ($carouselResponse->successful()) {
-        //     dd("Carousel is now on your profile! Go check!");
-        // }else{
-        //     dd("Error on creating carousel.", $carouselResponse->json());
-        // }
+        if ($carouselResponse->successful()) {
+            dd("Carousel is now on your profile! Go check!");
+        }else{
+            dd("Error on creating carousel.", $carouselResponse->json());
+        }
     }
 
     public function render()

@@ -18,7 +18,7 @@
       <div class="flex flex-col items-center justify-center text-gray-500">
         <img src="{{ url('svg/upload.svg') }}" class="w-6 h-6">
         <p class="mt-2 text-lg">Choose a file or drag & drop it here</p>
-        <p class="text-lg text-gray-400">JPEG, PNG, PDG, and PDF formats, up to 50MB</p>
+        <p class="text-lg text-gray-400">For now just accept PNG formats, up to 5MB.</p>
       </div>
       <input type="file" id="canvaFile" class="hidden" wire:model="canvaFiles" multiple>
     </label>

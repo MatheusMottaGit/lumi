@@ -21,11 +21,21 @@
     </div>
 
     <div class="flex items-center justify-end w-full gap-2">
-        <button type="button" wire:click="prevStep" class="cursor-pointer mt-4 px-4 py-2 bg-gray-900/20 border border-gray-800 text-gray-200 rounded-md hover:bg-gray-950">
+        <button
+           @disabled($currentStep === 1)
+            type="button" 
+            wire:click="prevStep" 
+            class="disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer mt-4 px-4 py-2 bg-gray-900/20 border border-gray-800 text-gray-200 rounded-md hover:bg-gray-950"
+        >
             Go back
         </button>
 
-        <button type="button" wire:click="nextStep" disabled="{{ $currentStep === 4 }}" class="{{ $currentStep === 4 ? 'cursor-not-allowed opacity-50' : '' }} cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950">
+        <button
+            @disabled($currentStep === 4)
+            type="button" 
+            wire:click="nextStep" 
+            class="disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer mt-4 px-4 py-2 bg-sky-900 text-gray-200 rounded-md hover:bg-sky-950"
+        >
             Next
         </button>
     </div>

@@ -10,21 +10,23 @@ class ChatCompletionStep extends Component
     public $prompt = "";
     public $chatCompletionResponse = "";
 
-    public function generatePostSubtitle() {
+    public function generatePostCaption() {
         $this->dispatch("gerenatingCompletion");
 
-        $openAI = OpenAI::client(env("OPENAI_API_KEY"));
+        // $openAI = OpenAI::client(env("OPENAI_API_KEY"));
 
-        $completion = $openAI->chat()->create([
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'user', 'content' => $this->prompt]
-            ]
-        ]);
+        // $completion = $openAI->chat()->create([
+        //     'model' => 'gpt-4o-mini',
+        //     'messages' => [
+        //         ['role' => 'user', 'content' => $this->prompt]
+        //     ]
+        // ]);
 
-        $this->chatCompletionResponse = $completion->choices[0]->message->content;
+        // $this->chatCompletionResponse = $completion->choices[0]->message->content;
         
         $this->dispatch("doneCompletion");
+
+        $this->dispatch('notify', 'Caption generated!');
 
         $this->emit('generatedCompletion', $this->chatCompletionResponse);
     }

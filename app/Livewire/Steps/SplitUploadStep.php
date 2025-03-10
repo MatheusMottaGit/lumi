@@ -7,6 +7,7 @@ use Livewire\Component;
 class SplitUploadStep extends Component
 {
     public $canvaFiles = [];
+    public $imagesNumber = "";
     private $s3;
 
     public function __construct() {
@@ -28,7 +29,7 @@ class SplitUploadStep extends Component
             $fullFileWidth = imagesx($image);
             $fullFileHeight = imagesy($image);
 
-            $imagesQuantity = 3;
+            $imagesQuantity = (int) $this->imagesNumber;
             $eachImageWidth = $fullFileWidth / $imagesQuantity;
 
             for ($i=0; $i < $imagesQuantity; $i++) { 
@@ -63,8 +64,10 @@ class SplitUploadStep extends Component
             }
             imagedestroy($image);
         }
+
         $this->dispatch('stopSplitting');
-        // dd("uploaded!");
+
+        $this->dispatch('notify', 'Splitting completed!');
     }
 
     public function mount($canvaFiles) {
