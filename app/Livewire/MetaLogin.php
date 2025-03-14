@@ -6,6 +6,7 @@ use Livewire\Component;
 
 class MetaLogin extends Component
 {
+    public function getFacebookUserId() {}
     
     public function render()
     {
