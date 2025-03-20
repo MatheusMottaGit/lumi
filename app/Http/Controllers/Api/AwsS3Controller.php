@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Livewire\Steps;
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use Livewire\Component;
+use Illuminate\Http\Request;
 
-class SplitUploadStep extends Component
+class AwsS3Controller extends Controller
 {
-    public $canvaFiles = [];
-    public $imagesNumber = "";
     private $s3;
-
+    
     public function __construct() {
         $this->s3 = new S3Client([
             'version' => 'latest',
@@ -21,15 +22,37 @@ class SplitUploadStep extends Component
         ]);
     }
 
-    public function splitUploadS3CanvaFile() {
-        $this->dispatch('startSplitting');
+    public function handleUploadS3(Request $request) {
+        $request->validate([
+            'carouselFiles' => 'required|file|mimes:png,jpg,jpeg|max:1024',
+            'numberOfImages' => 'required|integer',
+        ]);
 
-        foreach ($this->canvaFiles as $file) {
+        $carouselFiles = $request->files('carouselFiles');
+
+        $dirName = $request->query('dirName');
+
+        $this->splitFile($carouselFiles, $dirName, $request->numberOfImages);
+    }
+
+    public function showImages(Request $request) {
+        $dirName = $request->query('dirName');
+
+        $images = $this->s3->listObjects([
+            'Bucket' => env('AWS_BUCKET'),
+            'Prefix' => $dirName
+        ]);
+
+        return response()->json($images, 200);
+    }
+
+    private function splitFile($carouselFiles, $dirName, $numberOfImages) {
+        foreach ($carouselFiles as $file) {
             $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
             $fullFileWidth = imagesx($image);
             $fullFileHeight = imagesy($image);
 
-            $imagesQuantity = (int) $this->imagesNumber;
+            $imagesQuantity = (int) $numberOfImages;
             $eachImageWidth = $fullFileWidth / $imagesQuantity;
 
             for ($i=0; $i < $imagesQuantity; $i++) { 
@@ -48,7 +71,7 @@ class SplitUploadStep extends Component
                 ob_start();
                 imagepng($cloned);
                 $imageRealContent = ob_get_clean();
-                $filePath = "lumi-posts/split_{$i}.png";
+                $filePath = "{$dirName}/split_{$i}.png";
                 
                 try {
                     $this->s3->putObject([
@@ -56,26 +79,14 @@ class SplitUploadStep extends Component
                         'Key' => $filePath,
                         'Body' => $imageRealContent,
                     ]);        
-                } catch (Aws\S3\Exception\S3Exception $e) {
+                } catch (S3Exception $e) {
                     dd($e);
                 }
-
                 imagedestroy($cloned);
             }
             imagedestroy($image);
         }
 
-        $this->dispatch('stopSplitting');
-
-        $this->dispatch('notify', 'Splitting completed!');
-    }
-
-    public function mount($canvaFiles) {
-        $this->canvaFiles = $canvaFiles;
-    }
-    
-    public function render()
-    {
-        return view('livewire.steps.split-upload-step');
+        return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
     }
 }
