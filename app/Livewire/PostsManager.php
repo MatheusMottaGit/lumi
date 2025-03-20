@@ -40,6 +40,6 @@ class PostsManager extends Component
 
     public function render()
     {
-        return view('livewire.posts-manager');
+        return view('livewire.posts-manager')->extends("components.layouts.app");
     }
 }

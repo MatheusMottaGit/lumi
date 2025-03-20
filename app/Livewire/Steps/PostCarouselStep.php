@@ -5,6 +5,7 @@ namespace App\Livewire\Steps;
 use Aws\S3\S3Client;
 use Http;
 use Livewire\Component;
+use Session;
 
 class PostCarouselStep extends Component
 {
@@ -29,10 +30,11 @@ class PostCarouselStep extends Component
     public function handleAIResponse($response) {
         $this->chatCompletionResponse = $response;
     }
-    
+
     public function showUploadedFiles() {
         $this->openImagesModal = true;
-        
+        $this->emit('loading', 'Carregando imagens...');
+
         try {
             $images = $this->s3->listObjectsV2([
                 'Bucket' => env("AWS_BUCKET"),
@@ -42,61 +44,83 @@ class PostCarouselStep extends Component
             foreach (array_slice($images['Contents'], 1) as $img) {
                 $this->splittedImagesPreview[] = env("AWS_URL") . $img['Key'];
             }
-        } catch (Aws\S3\Exception\S3Exception $e) {
-            dd($e);
-        }
 
-        // dd($this->splittedImagesPreview);
+            $this->emit('loading', '');
+
+        } catch (\Aws\S3\Exception\S3Exception $e) {
+            $this->emit('error', 'Erro ao carregar as imagens.');
+            return;
+        }
     }
 
     public function toggleSelection($image) {
         if (in_array($image, $this->imageOrder)) {
             $this->imageOrder = array_diff($this->imageOrder, [$image]);
-        }else{
+        } else {
             $this->imageOrder[] = $image;
         }
     }
 
+    private function findInstagramAccountId($access_token) {
+        $response = Http::get(env("GRAPH_API_URI") . "/me/accounts", [
+            'access_token' => $access_token
+        ]);
+
+        if ($response->successful()) {
+            $accounts = $response->json()['data'];
+            foreach ($accounts as $account) {
+                if ($account['instagram_business_account']) {
+                    return $account['id'];
+                }
+            }
+        }
+
+        return null;
+    }
+
     public function postInstagramCarousel() {
         $itemsID = [];
+        $accessToken = Session::get("userData")['access_token'];
+        $instagramAccountId = $this->findInstagramAccountId($accessToken);
 
-        // create an item container
+        $this->emit('loading', 'Postando carrossel...');
+
         foreach ($this->imageOrder as $image) {
-            $response = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
+            $response = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media", [
                 'is_carousel_item' => true,
                 'image_url' => $image,
-                'access_token' => env("GRAPH_ACCESS_TOKEN")
+                'access_token' => $accessToken
             ]);
 
             if ($response->successful()) {
                 $itemsID[] = $response->json()['id'];
-            }else{
-                dd("Error on creating carousel.", $response->json());
+            } else {
+                $this->emit('error', 'Erro ao criar o carrossel.');
+                return;
             }
         }
 
-        // create carousel container with items
-        $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media", [
+        $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media", [
             'media_type' => 'CAROUSEL',
             'children' => $itemsID,
-            'access_token' => env("GRAPH_ACCESS_TOKEN")
+            'access_token' => $accessToken
         ]);
 
         if (!$containerResponse->successful()) {
-            dd("Error on creating carousel.", $response->json());
+            $this->emit('error', 'Error on creating the carousel...');
+            return;
         }
 
-        // publish complete carousel container
-        $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . env("GRAPH_USER_ID") . "/media_publish", [
+        $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media_publish", [
             'creation_id' => $containerResponse->json()['id'],
             'caption' => 'Apenas aguarde. 👀',
-            'access_token' => env("GRAPH_ACCESS_TOKEN")
+            'access_token' => $accessToken
         ]);
 
         if ($carouselResponse->successful()) {
-            dd("Carousel is now on your profile! Go check!");
-        }else{
-            dd("Error on creating carousel.", $carouselResponse->json());
+            $this->dispatch('notify', 'Post submited! Go check on your profile.');
+        } else {
+            $this->emit('error', 'Erro ao publicar o carrossel.');
         }
     }
 
