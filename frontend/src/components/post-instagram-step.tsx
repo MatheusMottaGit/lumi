@@ -1,0 +1,36 @@
+import { Instagram, Search } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
+import { useState } from "react";
+
+export default function PostInstagramStep() {
+  const [imagesUrl, setImagesUrl] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+
+  function openImagesModal() {
+    setOpen(true);
+  }
+
+  async function getImagesFromBucket() {}
+
+  return (
+    <Card className="w-full bg-background">
+      <CardHeader className="flex flex-row items-center gap-4 border-b">
+        <Instagram className="h-8 w-8 text-gray-100" />
+        <div>
+          <CardTitle className="text-xl text-gray-100">Post to Instagram</CardTitle>
+          <CardDescription className="text-md text-gray-500">
+            Post the carousel to your Instagram account.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-center border border-gray-800 bg-gray-900/40 h-96 rounded-lg gap-3">
+          <Button>
+            <Search /> See images
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
