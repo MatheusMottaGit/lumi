@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 import { useState } from "react";
 
 const MIN_NUMBER_OF_PARTS = 2;
@@ -13,10 +14,43 @@ interface SplitUploadStepProps {
 }
 
 export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps) {
-  const [imagesParts, setImagesParts] = useState(MIN_NUMBER_OF_PARTS);
+  const [numberOfParts, setNumberOfParts] = useState(MIN_NUMBER_OF_PARTS);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleFileSplitting() {
-    
+    if (numberOfParts < MIN_NUMBER_OF_PARTS || numberOfParts > MAX_NUMBER_OF_PARTS) {
+      toast.error('Invalid number of parts', {
+        description: `Please enter a number between ${MIN_NUMBER_OF_PARTS} and ${MAX_NUMBER_OF_PARTS}.`
+      });
+      
+      return;
+    }
+  
+    try {
+      const response = await fetch('http://localhost:8000/api/split_upload', {
+        method: 'POST',
+        body: JSON.stringify({
+          carouselFiles: selectedFiles[0],
+          numberOfParts: numberOfParts,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to split and upload file');
+      }
+  
+      const result = await response.json();
+
+      toast.success('File processed successfully!', {
+        description: `${result.message['message']}`
+      });
+    } catch (error) {
+      toast.error('Failed to process file', {
+        description: 'There was an error while splitting and uploading your file. Please try again.'
+      });
+
+      throw error;
+    }
   }
 
   return (
@@ -41,23 +75,30 @@ export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps)
               <Input
                 id="parts"
                 type="number"
-                min="2"
-                max="10"
+                min={MIN_NUMBER_OF_PARTS}
+                max={MAX_NUMBER_OF_PARTS}
+                value={numberOfParts}
+                onChange={(e) => setNumberOfParts(Number(e.target.value))}
                 className="text-gray-100 p-2 rounded-lg"
                 placeholder="Max: 10"
-                onChange={(e) => setImagesParts(parseInt(e.target.value))}
               />
 
-              <Button type="button" onClick={handleFileSplitting} className="w-52" variant="secondary">
-                Split <Scissors />
+              <Button 
+                type="button" 
+                onClick={handleFileSplitting} 
+                className="w-52" 
+                variant="secondary"
+                disabled={isLoading}
+              >
+                <Scissors className="ml-2" />
               </Button>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            {selectedFiles && selectedFiles.map((file, index) => (
-              <div className="bg-gray-900/40 p-3 rounded-xl border border-gray-800 shadow-md w-full h-full">
-                <img key={index} src={URL.createObjectURL(file)} alt={file.name} className="w-full object-cover rounded-lg" />
+            {selectedFiles && selectedFiles.map((file, i) => (
+              <div key={i} className="bg-gray-900/40 p-3 rounded-xl border border-gray-800 shadow-md w-full h-full">
+                <img src={URL.createObjectURL(file)} alt={file.name} className="w-full object-cover rounded-lg" />
               </div>
             ))}
           </div>

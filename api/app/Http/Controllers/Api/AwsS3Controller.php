@@ -25,14 +25,14 @@ class AwsS3Controller extends Controller
     public function handleUploadS3(Request $request) {
         $request->validate([
             'carouselFiles' => 'required|file|mimes:png,jpg,jpeg|max:1024',
-            'numberOfImages' => 'required|integer',
+            'numberOfParts' => 'required|integer',
         ]);
 
         $carouselFiles = $request->files('carouselFiles');
 
         $dirName = $request->query('dirName');
 
-        $this->splitFile($carouselFiles, $dirName, $request->numberOfImages);
+        $this->splitFile($carouselFiles, $dirName, $request->numberOfParts);
     }
 
     public function showImages(Request $request) {
@@ -46,13 +46,13 @@ class AwsS3Controller extends Controller
         return response()->json($images, 200);
     }
 
-    private function splitFile($carouselFiles, $dirName, $numberOfImages) {
+    private function splitFile($carouselFiles, $dirName, $numberOfParts) {
         foreach ($carouselFiles as $file) {
             $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
             $fullFileWidth = imagesx($image);
             $fullFileHeight = imagesy($image);
 
-            $imagesQuantity = (int) $numberOfImages;
+            $imagesQuantity = (int) $numberOfParts;
             $eachImageWidth = $fullFileWidth / $imagesQuantity;
 
             for ($i=0; $i < $imagesQuantity; $i++) { 
