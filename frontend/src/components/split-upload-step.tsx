@@ -3,13 +3,21 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
+import { useState } from "react";
+
+const MIN_NUMBER_OF_PARTS = 2;
+const MAX_NUMBER_OF_PARTS = 10;
 
 interface SplitUploadStepProps {
   selectedFiles: File[];
 }
 
 export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps) {
-  async function handleFileSplitting() {}
+  const [imagesParts, setImagesParts] = useState(MIN_NUMBER_OF_PARTS);
+
+  async function handleFileSplitting() {
+    
+  }
 
   return (
     <Card className="w-full bg-background">
@@ -37,9 +45,10 @@ export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps)
                 max="10"
                 className="text-gray-100 p-2 rounded-lg"
                 placeholder="Max: 10"
+                onChange={(e) => setImagesParts(parseInt(e.target.value))}
               />
 
-              <Button className="w-52" variant="secondary">
+              <Button type="button" onClick={handleFileSplitting} className="w-52" variant="secondary">
                 Split <Scissors />
               </Button>
             </div>
