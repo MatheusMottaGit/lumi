@@ -5,15 +5,28 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CarouselPostController extends Controller
 {
     public function postInstagramCarousel(Request $request) {
-        $request->validate([
+        $messages = [
+            'imageOrder.required' => 'The image order field is required.',
+            'chatCompletion.required' => 'The chat completion field is required.',
+        ];
+
+        $validator = Validator::make($request->all(), [
             'access_token' => 'required',
             'imageOrder' => 'required|array',
             'chatCompletion' => 'required|text'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Invalid data. Please check your input.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $itemsID = [];
         $accessToken = $request->access_token;

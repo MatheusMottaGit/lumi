@@ -5,13 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use OpenAI;
+use Illuminate\Support\Facades\Validator;
 
 class ChatCompletionController extends Controller
 {
     public function generatePostCaption(Request $request) {
-        $request->validate([
+        $messages = [
+            'prompt.required' => 'The prompt field is required.',
+        ];
+
+        $validator = Validator::make($request->all(), [
             'prompt' => 'required|string',
-        ]);
+        ], $messages);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Invalid data. Please check your input.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $prompt = $request->prompt;
 
@@ -21,19 +33,18 @@ class ChatCompletionController extends Controller
             'model' => 'gpt-4o-mini',
             'messages' => [
                 ['role' => 'user', 'content' => $prompt]
-            ]
+            ],
+            'stream' => true
         ]);
 
         if ($completion->choices[0]->message->content) {
             return response()->json([
-                'success' => true,
                 'message' => 'Caption generated!',
                 'data' => $completion->choices[0]->message->content
             ]);
         }
 
         return response()->json([
-            'success' => false,
             'message' => 'Failed to generate caption...'
         ]);
     }
