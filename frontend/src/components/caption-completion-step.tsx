@@ -16,15 +16,10 @@ export default function CaptionCompletionStep() {
       prompt,
     });
 
-    if (!(response.data.success)) {
-      toast.error(response.data.message);
+    if (!(response.status === 200)) {
+      toast.error("Failed to generate caption. Please try again later.");
       return;
     }
-
-    setCaption(response.data.data);
-    setPrompt("");
-
-    toast.success(response.data.message);
   }
 
   return (
@@ -47,7 +42,7 @@ export default function CaptionCompletionStep() {
             id="prompt"
             type="text"
             className="text-gray-100 p-2 rounded-lg"
-            placeholder="Write a prompt for the AI..."
+            placeholder="Type how you want your caption to be..."
           />
         </div>
         <div className="flex flex-col gap-3">
@@ -58,7 +53,6 @@ export default function CaptionCompletionStep() {
             id="response"
             className="text-gray-100 p-2 rounded-lg h-60 resize-none"
             placeholder="The AI-generated caption will appear here..."
-            value={caption}
           />
         </div>
       </CardContent>

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class AwsS3Controller extends Controller
 {
@@ -23,82 +25,78 @@ class AwsS3Controller extends Controller
     }
 
     public function handleUploadS3(Request $request) {
-        $messages = [
-            'carouselFiles.required' => 'The carousel files field is required.',
-            'carouselFiles.file' => 'The carousel files must be a file.',
-            'numberOfParts.required' => 'The number of parts field is required.',
-            'numberOfParts.integer' => 'The number of parts must be an integer.',
-        ];
+        try {
+            $messages = [
+                'carouselFiles.required' => 'The carousel files field is required.',
+                'carouselFiles.file' => 'The carousel files must be a file.',
+            ];
 
-        $validator = Validator::make($request->all(), [
-            'carouselFiles' => 'required|file|mimes:png,jpg,jpeg|max:1024',
-            'numberOfParts' => 'required|integer',
-        ], $messages);
+            $validator = Validator::make($request->all(), [
+                'carouselFiles' => 'required|file|mimes:png|max:2048',
+            ], $messages);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()], 400);
+            if ($validator->fails()) {
+                return response()->json(['message' => $validator->errors()], 400);
+            }
+
+            $file = $request->file('carouselFiles');
+            $numberOfParts = (int) $request->query('numberOfParts', 2);
+            $dirName = $request->query('dirName', 'default_folder');
+
+            $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
+            $fullFileWidth = imagesx($image);
+            $fullFileHeight = imagesy($image);
+
+            $eachImageWidth = $fullFileWidth / $numberOfParts;
+
+            for ($i = 0; $i < $numberOfParts; $i++) {
+                $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
+                imagecopy($cloned, $image, 0, 0, $eachImageWidth * $i, 0, $eachImageWidth, $fullFileHeight);
+
+                ob_start();
+                imagepng($cloned);
+                $imageRealContent = ob_get_clean();
+                $filePath = "{$dirName}/split_{$i}.png";
+                
+                try {
+                    $this->s3->putObject([
+                        'Bucket' => env("AWS_BUCKET"),
+                        'Key' => $filePath,
+                        'Body' => $imageRealContent,
+                        'ContentType' => 'image/png',
+                    ]);
+                } catch (S3Exception $e) {
+                    return response()->json(['message' => $e->getMessage()], 400);
+                } 
+
+                imagedestroy($cloned);
+            }
+            imagedestroy($image);
+
+            return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error splitting the file. Please try again.'], 400);
         }
-
-        $carouselFiles = $request->files('carouselFiles');
-
-        $dirName = $request->query('dirName');
-
-        $this->splitFile($carouselFiles, $dirName, $request->numberOfParts);
     }
 
     public function showImages(Request $request) {
         $dirName = $request->query('dirName');
 
-        $images = $this->s3->listObjects([
-            'Bucket' => env('AWS_BUCKET'),
-            'Prefix' => $dirName
-        ]);
-
-        return response()->json($images, 200);
-    }
-
-    private function splitFile($carouselFiles, $dirName, $numberOfParts) {
         try {
-            foreach ($carouselFiles as $file) {
-                $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
-                $fullFileWidth = imagesx($image);
-                $fullFileHeight = imagesy($image);
-    
-                $imagesQuantity = (int) $numberOfParts;
-                $eachImageWidth = $fullFileWidth / $imagesQuantity;
-    
-                for ($i=0; $i < $imagesQuantity; $i++) { 
-                    $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
-                    imagecopy(
-                        $cloned,
-                        $image,
-                        0,
-                        0,
-                        $eachImageWidth * $i,
-                        0,
-                        $eachImageWidth,
-                        $fullFileHeight
-                    );
-    
-                    ob_start();
-                    imagepng($cloned);
-                    $imageRealContent = ob_get_clean();
-                    $filePath = "{$dirName}/split_{$i}.png";
-                    
-                    $this->s3->putObject([
-                        'Bucket' => env("AWS_BUCKET"),
-                        'Key' => $filePath,
-                        'Body' => $imageRealContent,
-                    ]); 
-                    
-                    imagedestroy($cloned);
-                }
-                imagedestroy($image);
-            }
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error splitting the file. Please try again.'], 400);
-        }
+            $splittedImages = [];
 
-        return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
+            $images = $this->s3->listObjectsV2([
+                'Bucket' => env('AWS_BUCKET'),
+                'Prefix' => $dirName
+            ]);
+
+            foreach ($images['Contents'] as $img) {
+                $splittedImages[] = env("AWS_URL") . $img['Key'];
+            }
+
+            return response()->json($splittedImages, 200);
+        } catch (S3Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 }

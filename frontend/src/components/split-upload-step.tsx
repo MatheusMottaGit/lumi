@@ -6,7 +6,6 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useState } from "react";
 import { http } from "@/lib/axios";
-import { useMutation } from "@tanstack/react-query";
 
 const MIN_NUMBER_OF_PARTS = 2;
 const MAX_NUMBER_OF_PARTS = 10;
@@ -18,28 +17,34 @@ interface SplitUploadStepProps {
 export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps) {
   const [numberOfParts, setNumberOfParts] = useState(MIN_NUMBER_OF_PARTS);
   const [dirName, setDirName] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleFileSplitting() {
-    const response = await http.post('/api/split_upload', {
-      carouselFiles: selectedFiles[0],
-      numberOfParts: numberOfParts,
-    }, {
-      headers: {
-        query: dirName,
-      }
-    });
-
-    if (!(response.status === 200)) {
-      toast.error('Error splitting the file. Please try again.');
+    if (numberOfParts < MIN_NUMBER_OF_PARTS || numberOfParts > MAX_NUMBER_OF_PARTS) {
+      toast.error(`Number of parts should be between ${MIN_NUMBER_OF_PARTS} and ${MAX_NUMBER_OF_PARTS}`);
       return;
     }
-
-    toast.success(response.data.message);
-  }
-
-  const mutation = useMutation({
-    mutationFn: handleFileSplitting,
-  });
+  
+    setLoading(true);
+  
+    const formData = new FormData();
+    formData.append('carouselFiles', selectedFiles[0]);
+  
+    try {
+      const response = await http.post('/split_upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        params: { numberOfParts, dirName },
+      });
+  
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error('Failed to split and upload image. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  }    
 
   return (
     <Card className="w-full bg-background">
@@ -95,7 +100,7 @@ export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps)
                 className="w-full"
               >
                 {
-                  mutation.isPending ? (
+                  loading ? (
                     <Loader className="animate-spin" />
                   ) : (
                     <>

@@ -1,7 +1,8 @@
-import { Instagram, Search } from "lucide-react";
+import { Instagram } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
 import { useState } from "react";
+import { http } from "@/lib/axios";
+import BucketPartsModal from "./bucket-parts-modal";
 
 export default function PostInstagramStep() {
   const [imagesUrl, setImagesUrl] = useState<string[]>([]);
@@ -11,7 +12,15 @@ export default function PostInstagramStep() {
     setOpen(true);
   }
 
-  async function getImagesFromBucket() {}
+  async function getPartsFromBucket() {
+    const response = await http.get("/bucket/parts", {
+      params: {
+        dirName: 'random1',
+      },
+    });
+
+    setImagesUrl(response.data);
+  }
 
   return (
     <Card className="w-full bg-background">
@@ -26,9 +35,7 @@ export default function PostInstagramStep() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-center border border-gray-800 bg-gray-900/40 h-96 rounded-lg gap-3">
-          <Button>
-            <Search /> See images
-          </Button>
+          <BucketPartsModal getPartsFromBucket={getPartsFromBucket} imagesUrl={imagesUrl} />
         </div>
       </CardContent>
     </Card>
