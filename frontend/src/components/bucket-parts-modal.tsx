@@ -7,19 +7,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader, Search } from "lucide-react";
+import { Loader, Search, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { http } from "@/lib/axios";
+import { toast } from "sonner";
 
 interface BucketPartsModalProps {
   getPartsFromBucket: () => Promise<void>;
   imagesUrl: string[];
 }
 
-export default function BucketPartsModal({
-  getPartsFromBucket,
-  imagesUrl,
-}: BucketPartsModalProps) {
+export default function BucketPartsModal({ getPartsFromBucket, imagesUrl }: BucketPartsModalProps) {
   const [loading, setLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
@@ -33,6 +32,26 @@ export default function BucketPartsModal({
     setSelectedImages((prev) =>
       prev.includes(url) ? prev.filter((img) => img !== url) : [...prev, url]
     );
+  }
+
+  async function postToInstagram() {
+    if (imagesUrl.length === 0) {
+      toast.error("Please select images before posting.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await http.post("/api/post/carousel", {
+        imageOrder: imagesUrl,
+      });
+
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error("Failed to post on Instagram.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -66,7 +85,6 @@ export default function BucketPartsModal({
               >
                 <img
                   src={url}
-                  alt={`Part ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 left-2 rounded">
@@ -81,6 +99,10 @@ export default function BucketPartsModal({
         ) : (
           <p className="text-center text-gray-500">No images found.</p>
         )}
+
+        <Button disabled={loading} variant="secondary" onClick={postToInstagram} className="w-fit">
+          {loading ? <Loader className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />} Post to Instagram
+        </Button>
       </DialogContent>
     </Dialog>
   );

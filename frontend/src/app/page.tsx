@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export default function Home() {
-  const [step, setStep] = useState(4);
+  const [step, setStep] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   function nextStep() {

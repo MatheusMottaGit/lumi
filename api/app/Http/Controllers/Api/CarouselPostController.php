@@ -16,9 +16,9 @@ class CarouselPostController extends Controller
         ];
 
         $validator = Validator::make($request->all(), [
-            'access_token' => 'required',
+            // 'access_token' => 'required',
             'imageOrder' => 'required|array',
-            'chatCompletion' => 'required|text'
+            'chatCompletion' => 'required|string'
         ]);
 
         if ($validator->fails()) {
@@ -29,7 +29,7 @@ class CarouselPostController extends Controller
         }
 
         $itemsID = [];
-        $accessToken = $request->access_token;
+        $accessToken = env("GRAPH_API_ACCESS_TOKEN");
         $instagramAccountId = $this->findInstagramAccount($accessToken);
 
         foreach ($request->imageOrder as $image) {
@@ -49,6 +49,7 @@ class CarouselPostController extends Controller
         $containerResponse = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media", [
             'media_type' => 'CAROUSEL',
             'children' => $itemsID,
+            'caption' => $request->chatCompletion,
             'access_token' => $accessToken
         ]);
 
@@ -58,7 +59,6 @@ class CarouselPostController extends Controller
 
         $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media_publish", [
             'creation_id' => $containerResponse->json()['id'],
-            'caption' => 'Apenas aguarde. 👀',
             'access_token' => $accessToken
         ]);
 
