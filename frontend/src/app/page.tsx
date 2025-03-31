@@ -7,16 +7,16 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export default function Home() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(4);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  function nextStep() {
+  function nextStep(): void {
     if (step < 4) {
       setStep((prev) => prev + 1);
     }
   }
 
-  function prevStep() {
+  function prevStep(): void {
     if (step > 0) {
       setStep((prev) => prev - 1);
     }

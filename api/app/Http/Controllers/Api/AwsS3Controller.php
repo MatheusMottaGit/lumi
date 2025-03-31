@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AwsS3Controller extends Controller
@@ -32,46 +31,48 @@ class AwsS3Controller extends Controller
             ];
 
             $validator = Validator::make($request->all(), [
-                'carouselFiles' => 'required|file|mimes:png|max:2048',
-            ], $messages);
+                'carouselFiles' => 'required|array',
+                'carouselFiles.*' => 'file|mimes:png|max:2048',
+            ], $messages);            
 
             if ($validator->fails()) {
                 return response()->json(['message' => $validator->errors()], 400);
             }
 
-            $file = $request->file('carouselFiles');
+            $files = $request->file('carouselFiles');
             $numberOfParts = (int) $request->query('numberOfParts', 2);
             $dirName = $request->query('dirName', 'default_folder');
 
-            $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
-            $fullFileWidth = imagesx($image);
-            $fullFileHeight = imagesy($image);
+            foreach ($files as $index => $file) {
+                $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
+                $fullFileWidth = imagesx($image);
+                $fullFileHeight = imagesy($image);
+                $eachImageWidth = $fullFileWidth / $numberOfParts;
 
-            $eachImageWidth = $fullFileWidth / $numberOfParts;
+                for ($i = 0; $i < $numberOfParts; $i++) {
+                    $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
+                    imagecopy($cloned, $image, 0, 0, $eachImageWidth * $i, 0, $eachImageWidth, $fullFileHeight);
 
-            for ($i = 0; $i < $numberOfParts; $i++) {
-                $cloned = imagecreatetruecolor($eachImageWidth, $fullFileHeight);
-                imagecopy($cloned, $image, 0, 0, $eachImageWidth * $i, 0, $eachImageWidth, $fullFileHeight);
+                    ob_start();
+                    imagepng($cloned);
+                    $imageRealContent = ob_get_clean();
+                    $filePath = "{$dirName}/file_{$index}_split_{$i}.png"; 
+                    
+                    try {
+                        $this->s3->putObject([
+                            'Bucket' => env("AWS_BUCKET"),
+                            'Key' => $filePath,
+                            'Body' => $imageRealContent,
+                            'ContentType' => 'image/png',
+                        ]);
+                    } catch (S3Exception $e) {
+                        return response()->json(['message' => $e->getMessage()], 400);
+                    } 
 
-                ob_start();
-                imagepng($cloned);
-                $imageRealContent = ob_get_clean();
-                $filePath = "{$dirName}/split_{$i}.png";
-                
-                try {
-                    $this->s3->putObject([
-                        'Bucket' => env("AWS_BUCKET"),
-                        'Key' => $filePath,
-                        'Body' => $imageRealContent,
-                        'ContentType' => 'image/png',
-                    ]);
-                } catch (S3Exception $e) {
-                    return response()->json(['message' => $e->getMessage()], 400);
-                } 
-
-                imagedestroy($cloned);
+                    imagedestroy($cloned);
+                }
+                imagedestroy($image);
             }
-            imagedestroy($image);
 
             return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
         } catch (\Throwable $th) {

@@ -12,21 +12,21 @@ import { Button } from "./ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { http } from "@/lib/axios";
 import { toast } from "sonner";
+import { useRequest } from "@/hooks/useRequest";
 
 interface BucketPartsModalProps {
   getPartsFromBucket: () => Promise<void>;
   imagesUrl: string[];
+  loading: boolean
 }
 
-export default function BucketPartsModal({ getPartsFromBucket, imagesUrl }: BucketPartsModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+interface PostToInstagramResponse {
+  message: string
+}
 
-  async function handleOpen() {
-    setLoading(true);
-    await getPartsFromBucket();
-    setLoading(false);
-  }
+export default function BucketPartsModal({ getPartsFromBucket, imagesUrl, loading: partsLoading }: BucketPartsModalProps) {
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const { error, loading: postLoading, requestFn } = useRequest<PostToInstagramResponse>();
 
   function toggleImageSelection(url: string) {
     setSelectedImages((prev) =>
@@ -39,25 +39,12 @@ export default function BucketPartsModal({ getPartsFromBucket, imagesUrl }: Buck
       toast.error("Please select images before posting.");
       return;
     }
-
-    setLoading(true);
-    try {
-      const response = await http.post("/api/post/carousel", {
-        imageOrder: imagesUrl,
-      });
-
-      toast.success(response.data.message);
-    } catch (error) {
-      toast.error("Failed to post on Instagram.");
-    } finally {
-      setLoading(false);
-    }
   }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button onClick={handleOpen} className="flex items-center gap-2">
+        <Button onClick={getPartsFromBucket} className="flex items-center gap-2">
           <Search className="w-5 h-5" /> See images
         </Button>
       </DialogTrigger>
@@ -69,7 +56,7 @@ export default function BucketPartsModal({ getPartsFromBucket, imagesUrl }: Buck
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
+        {partsLoading ? (
           <div className="flex justify-center py-4">
             <Loader className="animate-spin h-6 w-6 text-gray-500" />
           </div>
@@ -100,8 +87,12 @@ export default function BucketPartsModal({ getPartsFromBucket, imagesUrl }: Buck
           <p className="text-center text-gray-500">No images found.</p>
         )}
 
-        <Button disabled={loading} variant="secondary" onClick={postToInstagram} className="w-fit">
-          {loading ? <Loader className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />} Post to Instagram
+        <Button disabled={postLoading} variant="secondary" onClick={postToInstagram} className="w-fit">
+          {
+            postLoading ? <Loader className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />
+          } 
+          
+          Post to Instagram
         </Button>
       </DialogContent>
     </Dialog>

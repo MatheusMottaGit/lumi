@@ -5,46 +5,57 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useState } from "react";
-import { http } from "@/lib/axios";
+import { useRequest } from "@/hooks/useRequest";
 
-const MIN_NUMBER_OF_PARTS = 2;
-const MAX_NUMBER_OF_PARTS = 10;
+const MIN_NUMBER_OF_PARTS: number = 2;
+const MAX_NUMBER_OF_PARTS: number = 12;
 
 interface SplitUploadStepProps {
   selectedFiles: File[];
 }
 
-export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps) {
-  const [numberOfParts, setNumberOfParts] = useState(MIN_NUMBER_OF_PARTS);
-  const [dirName, setDirName] = useState('');
-  const [loading, setLoading] = useState(false);
+interface SplitUploadResponse {
+  message: string
+}
 
-  async function handleFileSplitting() {
+export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps) {
+  const [numberOfParts, setNumberOfParts] = useState<number>(MIN_NUMBER_OF_PARTS);
+  const [dirName, setDirName] = useState<string>('');
+
+  const { data, error, loading, requestFn } = useRequest<SplitUploadResponse>();
+
+  async function handleFileSplitting(): Promise<void> {
     if (numberOfParts < MIN_NUMBER_OF_PARTS || numberOfParts > MAX_NUMBER_OF_PARTS) {
-      toast.error(`Number of parts should be between ${MIN_NUMBER_OF_PARTS} and ${MAX_NUMBER_OF_PARTS}`);
+      toast.error(`Number of parts must be between ${MIN_NUMBER_OF_PARTS} and ${MAX_NUMBER_OF_PARTS}`);
       return;
     }
   
-    setLoading(true);
-  
-    const formData = new FormData();
-    formData.append('carouselFiles', selectedFiles[0]);
-  
-    try {
-      const response = await http.post('/split_upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        params: { numberOfParts, dirName },
-      });
-  
-      toast.success(response.data.message);
-    } catch (error) {
-      toast.error('Failed to split and upload image. Try again.');
-    } finally {
-      setLoading(false);
+    const formData: FormData = new FormData();
+    selectedFiles.forEach((file) => formData.append("carouselFiles[]", file));
+
+    await requestFn('/split_upload', {
+      data: formData,
+      method: 'POST',
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      params: { 
+        numberOfParts, 
+        dirName 
+      },
+    });
+
+    if (error) {
+      toast.error(error);
+      return;
     }
-  }    
+
+    if (data) {
+      toast.success(data.message, {
+        description: "You'll be able to see the parts on the next steps!"
+      });
+    }
+  }      
 
   return (
     <Card className="w-full bg-background">
@@ -100,14 +111,10 @@ export default function SplitUploadStep({ selectedFiles }: SplitUploadStepProps)
                 className="w-full"
               >
                 {
-                  loading ? (
-                    <Loader className="animate-spin" />
-                  ) : (
-                    <>
-                      Split <Scissors />
-                    </>
-                  )
+                  loading ? <Loader className="animate-spin w-5 h-5" /> : <Scissors />
                 }
+
+                Split
               </Button>
             </div>
           </div>

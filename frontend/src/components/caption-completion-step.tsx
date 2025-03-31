@@ -4,30 +4,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { http } from "@/lib/axios";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import { useRequest } from "@/hooks/useRequest";
+
+interface CaptionCompletionResponse {
+  message: string
+  caption: string
+}
 
 export default function CaptionCompletionStep() {
-  const [caption, setCaption] = useState("");
-  const [prompt, setPrompt] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [prompt, setPrompt] = useState<string>("");
+  const { data, error, loading, requestFn } = useRequest<CaptionCompletionResponse>();
 
-  async function generateCaption() {
-    setLoading(true);
-
-    try {
-      const response = await http.post("/caption/completion", { prompt });
-
-      if (response.status === 200 && response.data.caption) {
-        setCaption(response.data.caption);
-      } else {
-        toast.error("Failed to generate caption. Please try again later.");
+  async function generateCaption(): Promise<void> {
+    await requestFn('/caption/completion', {
+      data: prompt,
+      method: 'POST',
+      params: {
+        dirName: 'random1'
       }
-    } catch (error) {
-      toast.error("An error occurred while generating the caption.");
-    } finally {
-      setLoading(false);
+    });
+
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    if (data) {
+      toast.success(data.message);
     }
   }
 
@@ -60,7 +65,7 @@ export default function CaptionCompletionStep() {
           <Label htmlFor="response" className="text-gray-100">Response</Label>
           <Textarea
             id="response"
-            value={caption}
+            value={data?.caption}
             readOnly
             className="text-gray-100 p-2 rounded-lg h-60 resize-none bg-gray-800"
             placeholder="The AI-generated caption will appear here..."
@@ -68,7 +73,10 @@ export default function CaptionCompletionStep() {
         </div>
 
         <Button onClick={generateCaption} variant="secondary" disabled={loading} className="flex items-center gap-2">
-          {loading ? <Loader className="animate-spin w-5 h-5" /> : <WandSparkles />}
+          {
+            loading ? <Loader className="animate-spin w-5 h-5" /> : <WandSparkles />
+          }
+
           Generate
         </Button>
       </CardContent>

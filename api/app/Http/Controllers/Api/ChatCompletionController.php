@@ -40,7 +40,7 @@ class ChatCompletionController extends Controller
         if ($completion->choices[0]->message->content) {
             return response()->json([
                 'message' => 'Caption generated!',
-                'data' => $completion->choices[0]->message->content
+                'caption' => $completion->choices[0]->message->content
             ]);
         }
 
