@@ -1,43 +1,50 @@
-import { useState, useCallback } from 'react';
-import { AxiosRequestConfig } from 'axios';
-import { http } from '../lib/axios';
+import { useState } from 'react';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
-interface UseRequestResult<T> {
-  data: T | null;
-  error: string | null;
-  loading: boolean;
-  requestFn: (url: string, config?: AxiosRequestConfig) => Promise<T | undefined>;
+const http: AxiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+});
+
+type HttpMethod = "GET" | "POST";
+
+interface UseRequestOptions extends AxiosRequestConfig {
+  method?: HttpMethod;
 }
 
-export function useRequest<T = unknown>(): UseRequestResult<T> {
+export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOptions) {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function requestFn(url: string, config: AxiosRequestConfig = {}) {
+  async function requestFn(overrideOptions?: UseRequestOptions) {
     setLoading(true);
+    
     setError(null);
 
     try {
       const response = await http.request<T>({
-        url,
-        method: config.method || 'GET',
-        ...config,
+        url: endpoint,
+        method: overrideOptions?.method || options?.method || "GET",
+        ...options,
+        ...overrideOptions
       });
 
       setData(response.data);
+
       return response.data;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Something went wrong...');
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      
+      setError(axiosError.response?.data as string || axiosError.message);
     } finally {
       setLoading(false);
     }
   }
 
-  return { 
-    data, 
-    error, 
-    loading, 
-    requestFn 
-  };
+  return {
+    data,
+    loading,
+    error,
+    requestFn
+  }
 }

@@ -1,38 +1,34 @@
-import { useState } from "react";
 import { AlignLeft, WandSparkles, Loader } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { useRequest } from "@/hooks/useRequest";
 
-interface CaptionCompletionResponse {
-  message: string
-  caption: string
+interface CaptionCompletionStepProps {
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  caption: string;
+  setCaption: (prompt: string) => void;
 }
 
-export default function CaptionCompletionStep() {
-  const [prompt, setPrompt] = useState<string>("");
-  const { data, error, loading, requestFn } = useRequest<CaptionCompletionResponse>();
+interface CaptionCompletionResponse {
+  message: string;
+  caption: string;
+}
 
-  async function generateCaption(): Promise<void> {
-    await requestFn('/caption/completion', {
-      data: prompt,
-      method: 'POST',
-      params: {
-        dirName: 'random1'
+export default function CaptionCompletionStep({ prompt, setPrompt, caption, setCaption }: CaptionCompletionStepProps) {
+  const { data, error, loading, requestFn } = useRequest<CaptionCompletionResponse | null>("/caption/completion", { method: "POST" });
+
+  async function generateCaption() {
+    await requestFn({
+      data: { 
+        prompt
       }
     });
 
-    if (error) {
-      toast.error(error);
-      return;
-    }
-
     if (data) {
-      toast.success(data.message);
+      setCaption(data.caption);
     }
   }
 
@@ -48,16 +44,15 @@ export default function CaptionCompletionStep() {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-3">
           <Label htmlFor="prompt" className="text-gray-100">Prompt</Label>
-          <Input
+          <Textarea
             id="prompt"
-            type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="text-gray-100 p-2 rounded-lg"
-            placeholder="Type how you want your caption to be..."
+            className="text-gray-100 p-2 rounded-lg h-60 resize-none bg-gray-800"
+            placeholder="Type how you want your caption to be (tip: be specific)..."
           />
         </div>
 
@@ -65,18 +60,17 @@ export default function CaptionCompletionStep() {
           <Label htmlFor="response" className="text-gray-100">Response</Label>
           <Textarea
             id="response"
-            value={data?.caption}
+            value={caption}
             readOnly
             className="text-gray-100 p-2 rounded-lg h-60 resize-none bg-gray-800"
             placeholder="The AI-generated caption will appear here..."
           />
         </div>
 
-        <Button onClick={generateCaption} variant="secondary" disabled={loading} className="flex items-center gap-2">
+        <Button onClick={generateCaption} variant="secondary" disabled={loading} className="flex items-center gap-2 col-span-2">
           {
             loading ? <Loader className="animate-spin w-5 h-5" /> : <WandSparkles />
           }
-
           Generate
         </Button>
       </CardContent>

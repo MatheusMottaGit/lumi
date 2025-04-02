@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Log;
 
 class CarouselPostController extends Controller
 {
@@ -19,7 +20,7 @@ class CarouselPostController extends Controller
             // 'access_token' => 'required',
             'imageOrder' => 'required|array',
             'chatCompletion' => 'required|string'
-        ]);
+        ], $messages);
 
         if ($validator->fails()) {
             return response()->json([
@@ -30,7 +31,7 @@ class CarouselPostController extends Controller
 
         $itemsID = [];
         $accessToken = env("GRAPH_API_ACCESS_TOKEN");
-        $instagramAccountId = $this->findInstagramAccount($accessToken);
+        $instagramAccountId = env("GRAPH_INSTAGRAM_ACCOUNT_ID");
 
         foreach ($request->imageOrder as $image) {
             $response = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media", [
@@ -38,7 +39,7 @@ class CarouselPostController extends Controller
                 'image_url' => $image,
                 'access_token' => $accessToken
             ]);
-
+            
             if ($response->successful()) {
                 $itemsID[] = $response->json()['id'];
             } else {
@@ -52,6 +53,8 @@ class CarouselPostController extends Controller
             'caption' => $request->chatCompletion,
             'access_token' => $accessToken
         ]);
+
+        Log::debug($containerResponse);
 
         if (!$containerResponse->successful()) {
             return response()->json(['error' => 'Error on creating the carousel...'], 400);

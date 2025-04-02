@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export default function Home() {
-  const [step, setStep] = useState<number>(4);
+  const [step, setStep] = useState<number>(1);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [prompt, setPrompt] = useState<string>("");
+  const [dirName, setDirName] = useState<string>("");
+  const [caption, setCaption] = useState<string>("");
 
   function nextStep(): void {
     if (step < 4) {
@@ -25,9 +28,9 @@ export default function Home() {
   return (
     <form className="flex flex-col gap-3 items-center justify-center w-3/4">
       {step === 1 && <BrowseFileStep selectedFiles={selectedFiles} setSelectedFiles={setSelectedFiles} />}
-      {step === 2 && <SplitUploadStep selectedFiles={selectedFiles} />}
-      {step === 3 && <CaptionCompletionStep />}
-      {step === 4 && <PostInstagramStep />}
+      {step === 2 && <SplitUploadStep selectedFiles={selectedFiles} dirName={dirName} setDirName={setDirName} />}
+      {step === 3 && <CaptionCompletionStep prompt={prompt} setPrompt={setPrompt} caption={caption} setCaption={setCaption} />}
+      {step === 4 && <PostInstagramStep dirName={dirName} caption={caption} /> }
 
       <div className="flex items-center gap-3 self-end">
         <Button type="button" onClick={prevStep} variant="outline">Go back</Button>
@@ -36,3 +39,12 @@ export default function Home() {
     </form>
   );
 }
+
+// Vou fazer uma postagem carousel sobre BUSCA BINÁRIA e você deve fazer uma legenda para COMPLEMENTAR o post. Siga as seguintes instruções:
+
+// - NÃO seja informativo sobre o tema, você deve apenas relacionar o tema ao post;
+// - Seja levemente descontraído, porém em tom profissional;
+// - NÃO precisa de muito texto, pode ser breve;
+// - No final peça curtida e compartilhamento;
+// - Use emojis pontuais (NÃO EXAGERE, use NO MÁXIMO 2);
+// - Monte um pequeno título para o post (não indique que é o titulo)

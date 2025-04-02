@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Log;
 use OpenAI;
 use Illuminate\Support\Facades\Validator;
 
@@ -34,10 +35,12 @@ class ChatCompletionController extends Controller
             'messages' => [
                 ['role' => 'user', 'content' => $prompt]
             ],
-            'stream' => true
+            // 'stream' => true
         ]);
 
         if ($completion->choices[0]->message->content) {
+            // Log::debug($completion->choices[0]->message->content);
+
             return response()->json([
                 'message' => 'Caption generated!',
                 'caption' => $completion->choices[0]->message->content
