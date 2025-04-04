@@ -35,11 +35,17 @@ export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: 
     });
   }
 
-  if (data) {
-    toast.success(data.message, {
-      description: "You'll be able to see the parts on the next steps!",
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+
+    if (data) {
+      toast.success(data.message, {
+        description: "You'll be able to see the parts on the nexts steps!"
+      });
+    }
+  }, [data, error])
 
   return (
     <Card className="w-full bg-background">

@@ -18,7 +18,6 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
 
   async function requestFn(overrideOptions?: UseRequestOptions) {
     setLoading(true);
-    
     setError(null);
 
     try {
@@ -30,13 +29,18 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
       });
 
       setData(response.data);
-
       return response.data;
+
     } catch (error) {
-      const axiosError = error as AxiosError;
-      
-      setError(axiosError.response?.data as string || axiosError.message);
-    } finally {
+      const axiosError = error as AxiosError<{ error: string }>;
+    
+      if (axiosError.response?.data?.error) {
+        setError(axiosError.response.data.error);
+      } else {
+        setError(axiosError.message);
+      }
+    }
+     finally {
       setLoading(false);
     }
   }

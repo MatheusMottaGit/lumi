@@ -17,15 +17,13 @@ class CarouselPostController extends Controller
         ];
 
         $validator = Validator::make($request->all(), [
-            // 'access_token' => 'required',
             'imageOrder' => 'required|array',
             'chatCompletion' => 'required|string'
         ], $messages);
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Invalid data. Please check your input.',
-                'errors' => $validator->errors()
+                'error' => $validator->errors()
             ], 422);
         }
 
@@ -39,11 +37,13 @@ class CarouselPostController extends Controller
                 'image_url' => $image,
                 'access_token' => $accessToken
             ]);
+
+            Log::debug($response);
             
             if ($response->successful()) {
                 $itemsID[] = $response->json()['id'];
             } else {
-                return response()->json(['error' => 'Error on creating the carousel...'], 400);
+                return response()->json(['error' => 'Failed to set the items for the carousel. Try again.'], 400);
             }
         }
 
@@ -57,7 +57,7 @@ class CarouselPostController extends Controller
         Log::debug($containerResponse);
 
         if (!$containerResponse->successful()) {
-            return response()->json(['error' => 'Error on creating the carousel...'], 400);
+            return response()->json(['error' => 'Failed to create your carousel container.'], 400);
         }
 
         $carouselResponse = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media_publish", [
@@ -66,9 +66,9 @@ class CarouselPostController extends Controller
         ]);
 
         if ($carouselResponse->successful()) {
-            return response()->json(['message' => 'Carousel created successfuly!'], 200);
+            return response()->json(['message' => 'Carousel posted successfuly!'], 200);
         } else {
-            return response()->json(['error' => 'Error on creating the carousel...'], 400);
+            return response()->json(['error' => 'Error on posting the carousel...'], 400);
         }
     }
 

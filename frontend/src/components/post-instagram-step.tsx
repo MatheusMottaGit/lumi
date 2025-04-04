@@ -1,6 +1,6 @@
 import { Instagram, Loader, Search, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRequest } from "@/hooks/useRequest";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -17,8 +17,8 @@ interface PostInstagramStepProps {
 export default function PostInstagramStep({ dirName, caption }: PostInstagramStepProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
-  const { data: imagesUrl, loading: loadingImages, requestFn: getPartsFromBucket } = useRequest<BucketPartsResponse>("/bucket/parts");
-  const { loading: loadingPost, requestFn: postToInstagram } = useRequest("/post/carousel");
+  const { data: imagesUrl, loading: loadingImages, requestFn: getPartsFromBucket, error: imagesError } = useRequest<BucketPartsResponse>("/bucket/parts");
+  const { loading: loadingPost, requestFn: postToInstagram, error: postError } = useRequest("/post/carousel");
 
   function toggleImageSelection(url: string) {
     setSelectedImages((prev) =>
@@ -27,31 +27,33 @@ export default function PostInstagramStep({ dirName, caption }: PostInstagramSte
   }
 
   async function handleGetPartsFromBucket() {
-    try {
-      await getPartsFromBucket({
-        params: {
-          dirName,
-        }
-      });
-    } catch {
-      toast.error("Failed to fetch images.");
-    }
+    await getPartsFromBucket({
+      params: {
+        dirName,
+      }
+    });
   }
 
-  async function handlePostToInstagram() {
-    try {
-      await postToInstagram({
-        method: "POST",
-        data: { 
-          imageOrder: selectedImages,
-          chatCompletion: caption
-        },
+  useEffect(() => {
+    if(imagesError || postError) {
+      toast.error(imagesError || postError, {
+        description: "Please try again later.",
       });
-
-      toast.success("Carousel posted successfully!");
-    } catch {
-      toast.error("Failed to post on Instagram.");
+    } else {
+      toast.success("Your post is completed!", {
+        description: "Go check on your account.",
+      });
     }
+  }, [imagesError, postError])
+
+  async function handlePostToInstagram() {
+    await postToInstagram({
+      method: "POST",
+      data: { 
+        imageOrder: selectedImages,
+        chatCompletion: caption
+      },
+    });
   }
 
   return (

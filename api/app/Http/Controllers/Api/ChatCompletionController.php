@@ -33,16 +33,15 @@ class ChatCompletionController extends Controller
         $completion = $openAI->chat()->create([
             'model' => 'gpt-4o-mini',
             'messages' => [
-                ['role' => 'user', 'content' => $prompt]
+                [
+                    'role' => 'user', 
+                    'content' => $prompt
+                ]
             ],
-            // 'stream' => true
         ]);
 
         if ($completion->choices[0]->message->content) {
-            // Log::debug($completion->choices[0]->message->content);
-
             return response()->json([
-                'message' => 'Caption generated!',
                 'caption' => $completion->choices[0]->message->content
             ]);
         }

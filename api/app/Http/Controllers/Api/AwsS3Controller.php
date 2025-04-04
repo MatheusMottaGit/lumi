@@ -36,7 +36,7 @@ class AwsS3Controller extends Controller
             ], $messages);
     
             if ($validator->fails()) {
-                return response()->json(['message' => $validator->errors()], 400);
+                return response()->json(['error' => $validator->errors()], 400);
             }
     
             $files = $request->file('carouselFiles');
@@ -48,10 +48,10 @@ class AwsS3Controller extends Controller
                 $fullFileHeight = imagesy($image);
     
                 $numberOfParts = (int) round($fullFileWidth / 1080);
-    
-                if ($numberOfParts < 1) {
+                
+                if ($numberOfParts < 1 || $numberOfParts > 10) {
                     imagedestroy($image);
-                    return response()->json(['message' => "Invalid image dimensions for splitting"], 400);
+                    return response()->json(['error' => "Invalid image dimensions for splitting..."], 400);
                 }
     
                 $eachImageWidth = $fullFileWidth / $numberOfParts;
@@ -73,7 +73,7 @@ class AwsS3Controller extends Controller
                             'ContentType' => 'image/png',
                         ]);
                     } catch (S3Exception $e) {
-                        return response()->json(['message' => $e->getMessage()], 400);
+                        return response()->json(['error' => $e->getMessage()], 400);
                     }
     
                     imagedestroy($cloned);
@@ -83,7 +83,7 @@ class AwsS3Controller extends Controller
     
             return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error on splitting the file. Please try again.'], 400);
+            return response()->json(['error' => 'Error on splitting the file. Please try again.'], 400);
         }
     }    
 
@@ -104,7 +104,7 @@ class AwsS3Controller extends Controller
 
             return response()->json($splittedImages, 200);
         } catch (S3Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 }
