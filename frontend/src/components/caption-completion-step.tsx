@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { useRequest } from "@/hooks/useRequest";
+import { ApiResponse, useRequest } from "@/hooks/useRequest";
 
 interface CaptionCompletionStepProps {
   prompt: string;
@@ -12,13 +12,10 @@ interface CaptionCompletionStepProps {
   setCaption: (prompt: string) => void;
 }
 
-interface CaptionCompletionResponse {
-  message: string;
-  caption: string;
-}
+interface CaptionCompletionResponse extends ApiResponse<string> {}
 
 export default function CaptionCompletionStep({ prompt, setPrompt, caption, setCaption }: CaptionCompletionStepProps) {
-  const { data, error, loading, requestFn } = useRequest<CaptionCompletionResponse | null>("/caption/completion", { method: "POST" });
+  const { loading, requestFn } = useRequest<CaptionCompletionResponse>("/caption/completion", { method: "POST" });
 
   async function generateCaption() {
     await requestFn({
@@ -26,10 +23,6 @@ export default function CaptionCompletionStep({ prompt, setPrompt, caption, setC
         prompt
       }
     });
-
-    if (data) {
-      setCaption(data.caption);
-    }
   }
 
   return (
@@ -51,7 +44,7 @@ export default function CaptionCompletionStep({ prompt, setPrompt, caption, setC
             id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="text-gray-100 p-2 rounded-lg h-60 resize-none bg-gray-800"
+            className="text-gray-100 p-2 rounded-lg h-80 resize-none bg-gray-800"
             placeholder="Type how you want your caption to be (tip: be specific)..."
           />
         </div>
@@ -62,7 +55,8 @@ export default function CaptionCompletionStep({ prompt, setPrompt, caption, setC
             id="response"
             value={caption}
             readOnly
-            className="text-gray-100 p-2 rounded-lg h-60 resize-none bg-gray-800"
+            onChange={(e) => setCaption(e.target.value)}
+            className="text-gray-100 p-2 rounded-lg h-80 resize-none bg-gray-800"
             placeholder="The AI-generated caption will appear here..."
           />
         </div>

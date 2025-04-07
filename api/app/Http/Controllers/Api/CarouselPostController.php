@@ -54,7 +54,7 @@ class CarouselPostController extends Controller
             'access_token' => $accessToken
         ]);
 
-        Log::debug($containerResponse);
+        // Log::debug($containerResponse);
 
         if (!$containerResponse->successful()) {
             return response()->json(['error' => 'Failed to create your carousel container.'], 400);
@@ -66,26 +66,9 @@ class CarouselPostController extends Controller
         ]);
 
         if ($carouselResponse->successful()) {
-            return response()->json(['message' => 'Carousel posted successfuly!'], 200);
+            return response()->json(['data' => $carouselResponse['id'], 'message' => 'Carousel posted successfuly!'], 201);
         } else {
             return response()->json(['error' => 'Error on posting the carousel...'], 400);
         }
-    }
-
-    private function findInstagramAccount($access_token) {
-        $response = Http::get(env("GRAPH_API_URI") . "/me/accounts", [
-            'access_token' => $access_token
-        ]);
-
-        if ($response->successful()) {
-            $accounts = $response->json()['data'];
-            foreach ($accounts as $account) {
-                if ($account['instagram_business_account']) {
-                    return $account['id'];
-                }
-            }
-        }
-
-        return null;
     }
 }

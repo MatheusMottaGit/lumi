@@ -6,6 +6,8 @@ import SplitUploadStep from "@/components/split-upload-step";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
+const TOTAL_STEPS = 4;
+
 export default function Home() {
   const [step, setStep] = useState<number>(1);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -32,9 +34,16 @@ export default function Home() {
       {step === 3 && <CaptionCompletionStep prompt={prompt} setPrompt={setPrompt} caption={caption} setCaption={setCaption} />}
       {step === 4 && <PostInstagramStep dirName={dirName} caption={caption} /> }
 
-      <div className="flex items-center gap-3 self-end">
-        <Button type="button" onClick={prevStep} variant="outline">Go back</Button>
-        <Button type="button" onClick={nextStep}>Next</Button>
+      <div className="flex items-center justify-between w-full">
+        <p className="text-gray-500 font-medium">
+          Step <span className="font-bold">{step}</span> of <span className="font-bold">{TOTAL_STEPS}</span>
+        </p>
+
+        <div className="flex items-center gap-3">
+          <Button disabled={step === 1} type="button" onClick={prevStep} variant="outline">Go back</Button>
+
+          <Button disabled={step === 4} type="button" onClick={nextStep}>Next</Button>
+        </div>
       </div>
     </form>
   );

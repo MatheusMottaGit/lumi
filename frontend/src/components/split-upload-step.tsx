@@ -3,9 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { toast } from "sonner";
-import { useEffect } from "react";
-import { useRequest } from "@/hooks/useRequest";
+import { ApiResponse, useRequest } from "@/hooks/useRequest";
 
 interface SplitUploadStepProps {
   selectedFiles: File[];
@@ -13,12 +11,10 @@ interface SplitUploadStepProps {
   setDirName: (dirName: string) => void
 }
 
-interface SplitUploadResponse {
-  message: string;
-}
+interface SplitUploadResponse extends ApiResponse<string[]> {}
 
 export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: SplitUploadStepProps) {
-  const { data, error, loading, requestFn } = useRequest<SplitUploadResponse>("/split_upload", { method: "POST" });
+  const { loading, requestFn } = useRequest<SplitUploadResponse>("/split_upload", { method: "POST" });
 
   async function handleFileSplitting(): Promise<void> {
     const formData: FormData = new FormData();
@@ -34,18 +30,6 @@ export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: 
       }
     });
   }
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-
-    if (data) {
-      toast.success(data.message, {
-        description: "You'll be able to see the parts on the nexts steps!"
-      });
-    }
-  }, [data, error])
 
   return (
     <Card className="w-full bg-background">
@@ -84,8 +68,8 @@ export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: 
 
           <div className="flex flex-col gap-2">
             {selectedFiles.map((file, i) => (
-              <div key={i} className="bg-gray-900/40 p-3 rounded-xl border border-gray-800 shadow-md w-full h-full">
-                <img src={URL.createObjectURL(file)} alt={file.name} className="w-full object-cover rounded-lg" />
+              <div key={i} className="bg-gray-900/40 p-2 rounded-xl border border-gray-800 shadow-md w-full h-full">
+                <img src={URL.createObjectURL(file)} alt={file.name} className="w-full object-cover rounded-lg h-48" />
               </div>
             ))}
           </div>

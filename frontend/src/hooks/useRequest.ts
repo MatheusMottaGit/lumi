@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import { toast } from 'sonner';
 
 const http: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -11,8 +12,14 @@ interface UseRequestOptions extends AxiosRequestConfig {
   method?: HttpMethod;
 }
 
+export interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
+
 export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOptions) {
   const [data, setData] = useState<T | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +28,15 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
     setError(null);
 
     try {
-      const response = await http.request<T>({
+      const response = await http.request<ApiResponse<T>>({
         url: endpoint,
         method: overrideOptions?.method || options?.method || "GET",
         ...options,
         ...overrideOptions
       });
 
-      setData(response.data);
+      setData(response.data.data);
+      setSuccessMessage(response.data.message);
       return response.data;
 
     } catch (error) {
@@ -44,6 +52,20 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        description: "Please try again later.",
+      });
+    }
+
+    if (data) {
+      toast.success(successMessage, {
+        description: "You can now proceed to the next step.",
+      });
+    }
+  }, [error, data]);
 
   return {
     data,

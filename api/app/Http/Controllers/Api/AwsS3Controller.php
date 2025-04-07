@@ -24,6 +24,8 @@ class AwsS3Controller extends Controller
     }
 
     public function handleUploadS3(Request $request) {
+        $objectParts = [];
+        
         try {
             $messages = [
                 'carouselFiles.required' => 'The carousel files field is required.',
@@ -66,12 +68,14 @@ class AwsS3Controller extends Controller
                     $filePath = "{$dirName}/file_{$index}_split_{$i}.png";
     
                     try {
-                        $this->s3->putObject([
+                        $part = $this->s3->putObject([
                             'Bucket' => env("AWS_BUCKET"),
                             'Key' => $filePath,
                             'Body' => $imageRealContent,
                             'ContentType' => 'image/png',
                         ]);
+
+                        $objectParts[] = $part['ObjectURL'];
                     } catch (S3Exception $e) {
                         return response()->json(['error' => $e->getMessage()], 400);
                     }
@@ -81,7 +85,7 @@ class AwsS3Controller extends Controller
                 imagedestroy($image);
             }
     
-            return response()->json(['message' => 'Images splitted and uploaded successfully!'], 200);
+            return response()->json(['data' => $objectParts, 'message' => 'Images splitted and uploaded successfully!'], 200);
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Error on splitting the file. Please try again.'], 400);
         }
@@ -102,7 +106,7 @@ class AwsS3Controller extends Controller
                 $splittedImages[] = env("AWS_URL") . $img['Key'];
             }
 
-            return response()->json($splittedImages, 200);
+            return response()->json(['data' => $splittedImages, 'message' => 'Object parts found!'], 200);
         } catch (S3Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

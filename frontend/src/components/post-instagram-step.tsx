@@ -1,24 +1,24 @@
 import { Instagram, Loader, Search, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { useEffect, useState } from "react";
-import { useRequest } from "@/hooks/useRequest";
-import { toast } from "sonner";
+import { useState } from "react";
+import { ApiResponse, useRequest } from "@/hooks/useRequest";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
-
-type BucketPartsResponse = string[];
 
 interface PostInstagramStepProps {
   dirName: string
   caption: string
 }
 
+interface BucketPartsResponse extends ApiResponse<string[]> {}
+interface InstagramPostResponse extends ApiResponse<string> {}
+
 export default function PostInstagramStep({ dirName, caption }: PostInstagramStepProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
-  const { data: imagesUrl, loading: loadingImages, requestFn: getPartsFromBucket, error: imagesError } = useRequest<BucketPartsResponse>("/bucket/parts");
-  const { loading: loadingPost, requestFn: postToInstagram, error: postError } = useRequest("/post/carousel");
+  const { data: bucketPartsData, loading: loadingImages, requestFn: getPartsFromBucket } = useRequest<BucketPartsResponse>("/bucket/parts");
+  const { loading: loadingPost, requestFn: postToInstagram } = useRequest<InstagramPostResponse>("/post/carousel");
 
   function toggleImageSelection(url: string) {
     setSelectedImages((prev) =>
@@ -33,18 +33,6 @@ export default function PostInstagramStep({ dirName, caption }: PostInstagramSte
       }
     });
   }
-
-  useEffect(() => {
-    if(imagesError || postError) {
-      toast.error(imagesError || postError, {
-        description: "Please try again later.",
-      });
-    } else {
-      toast.success("Your post is completed!", {
-        description: "Go check on your account.",
-      });
-    }
-  }, [imagesError, postError])
 
   async function handlePostToInstagram() {
     await postToInstagram({
@@ -87,9 +75,9 @@ export default function PostInstagramStep({ dirName, caption }: PostInstagramSte
                 <div className="flex justify-center py-4">
                   <Loader className="animate-spin h-6 w-6 text-gray-500" />
                 </div>
-              ) : imagesUrl && imagesUrl.length > 0 ? (
+              ) : bucketPartsData && bucketPartsData.data.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2">
-                  {imagesUrl.map((url, index) => (
+                  {bucketPartsData.data.map((url, index) => (
                     <div
                       key={index}
                       className={`relative w-full h-40 border-2 rounded-lg overflow-hidden cursor-pointer ${

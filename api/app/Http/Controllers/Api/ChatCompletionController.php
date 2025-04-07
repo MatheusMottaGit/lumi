@@ -42,12 +42,13 @@ class ChatCompletionController extends Controller
 
         if ($completion->choices[0]->message->content) {
             return response()->json([
-                'caption' => $completion->choices[0]->message->content
-            ]);
+                'data' => $completion->choices[0]->message->content,
+                'message' => 'Caption generated successfully!'
+            ], 201);
         }
 
         return response()->json([
-            'message' => 'Failed to generate caption...'
-        ]);
+            'error' => 'Failed to generate caption...'
+        ], 400);
     }
 }
