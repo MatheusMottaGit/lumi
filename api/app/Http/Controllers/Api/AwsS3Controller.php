@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SplitFileRequest;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
@@ -23,24 +24,17 @@ class AwsS3Controller extends Controller
         ]);
     }
 
-    public function handleUploadS3(Request $request) {
+    public function handleUploadS3(SplitFileRequest $request) {
         $objectParts = [];
-        
+
+        if(!$request->validated()) {
+            return response()->json([
+                'message' => 'Invalid data. Please check your input.',
+                'error' => $request->errors()
+            ], 422);
+        }
+
         try {
-            $messages = [
-                'carouselFiles.required' => 'The carousel files field is required.',
-                'carouselFiles.file' => 'The carousel files must be a file.',
-            ];
-    
-            $validator = Validator::make($request->all(), [
-                'carouselFiles' => 'required|array',
-                'carouselFiles.*' => 'file|mimes:png|max:2048',
-            ], $messages);
-    
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()], 400);
-            }
-    
             $files = $request->file('carouselFiles');
             $dirName = $request->query('dirName');
     

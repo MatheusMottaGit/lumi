@@ -3,26 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Log;
+use App\Http\Requests\ChatCaptionRequest;
 use OpenAI;
-use Illuminate\Support\Facades\Validator;
 
 class ChatCompletionController extends Controller
 {
-    public function generatePostCaption(Request $request) {
-        $messages = [
-            'prompt.required' => 'The prompt field is required.',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'prompt' => 'required|string',
-        ], $messages);
-
-        if ($validator->fails()) {
+    public function generatePostCaption(ChatCaptionRequest $request) {
+        if (!$request->validated()) {
             return response()->json([
                 'message' => 'Invalid data. Please check your input.',
-                'errors' => $validator->errors()
+                'errors' => $request->errors()
             ], 422);
         }
 

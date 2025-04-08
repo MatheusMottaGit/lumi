@@ -3,27 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InstagramPostRequest;
 use Http;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Log;
 
 class CarouselPostController extends Controller
 {
-    public function postInstagramCarousel(Request $request) {
-        $messages = [
-            'imageOrder.required' => 'The image order field is required.',
-            'chatCompletion.required' => 'The chat completion field is required.',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'imageOrder' => 'required|array',
-            'chatCompletion' => 'required|string'
-        ], $messages);
-
-        if ($validator->fails()) {
+    public function postInstagramCarousel(InstagramPostRequest $request) {
+        if (!$request->validated()) {
             return response()->json([
-                'error' => $validator->errors()
+                'message' => 'Invalid data! Please check your input.',
+                'error' => $request->errors()
             ], 422);
         }
 
