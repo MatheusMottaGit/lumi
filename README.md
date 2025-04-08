@@ -4,24 +4,7 @@ This project provides an API for handling file uploads, image retrieval, caption
 
 ---
 
-## To Do
-
-```
-- Add image parts quantity validation - max: 10 (Frontend)
-```
-
----
-
 ## API Documentation
-
-### Base URL
-```
-http://your-domain.com/api
-```
-
----
-
-### Endpoints
 
 #### 1. **Split Upload**
 **Endpoint**: `/split_upload`  
@@ -29,7 +12,7 @@ http://your-domain.com/api
 **Controller**: `AwsS3Controller@handleUploadS3`  
 
 ##### Description:
-Uploads files to AWS S3 and splits them into multiple parts.
+Splits files into multiple parts and upload them to AWS S3 Bucket.
 
 ##### Request:
 - **Headers**:
@@ -153,7 +136,7 @@ Posts a carousel of images to Instagram.
 
 ### Notes
 - Ensure that the AWS S3 credentials and configurations are properly set up in the environment variables.
-- The AI caption generation feature requires an API key for the AI service (e.g., OpenAI).
+- The AI caption generation feature requires an API key for the AI service (OpenAI).
 
 ---
 
@@ -162,8 +145,3 @@ Posts a carousel of images to Instagram.
 - `AWS_SECRET_ACCESS_KEY`: AWS secret key.
 - `AWS_BUCKET_NAME`: Name of the S3 bucket.
 - `NEXT_PUBLIC_API_URL`: Base URL for the API.
-
----
-
-## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
