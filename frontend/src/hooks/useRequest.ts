@@ -65,7 +65,7 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
         description: "You can now proceed to the next step.",
       });
     }
-  }, [error, data]);
+  }, [error, data, successMessage]);
 
   return {
     data,

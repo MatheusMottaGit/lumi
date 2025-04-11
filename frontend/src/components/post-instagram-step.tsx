@@ -11,8 +11,8 @@ interface PostInstagramStepProps {
   caption: string
 }
 
-interface BucketPartsResponse extends ApiResponse<string[]> {}
-interface InstagramPostResponse extends ApiResponse<string> {}
+type BucketPartsResponse = ApiResponse<string[]>;
+type InstagramPostResponse = ApiResponse<string>;
 
 export default function PostInstagramStep({ dirName, caption }: PostInstagramStepProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);

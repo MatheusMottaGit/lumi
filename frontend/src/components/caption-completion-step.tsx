@@ -12,7 +12,7 @@ interface CaptionCompletionStepProps {
   setCaption: (prompt: string) => void;
 }
 
-interface CaptionCompletionResponse extends ApiResponse<string> {}
+type CaptionCompletionResponse = ApiResponse<string>;
 
 export default function CaptionCompletionStep({ prompt, setPrompt, caption, setCaption }: CaptionCompletionStepProps) {
   const { loading, requestFn } = useRequest<CaptionCompletionResponse>("/caption/completion", { method: "POST" });

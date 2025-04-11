@@ -11,7 +11,7 @@ interface SplitUploadStepProps {
   setDirName: (dirName: string) => void
 }
 
-interface SplitUploadResponse extends ApiResponse<string[]> {}
+type SplitUploadResponse = ApiResponse<string[]>;
 
 export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: SplitUploadStepProps) {
   const { loading, requestFn } = useRequest<SplitUploadResponse>("/split_upload", { method: "POST" });
