@@ -1,25 +1,24 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/auth-context";
 import { Facebook, Fingerprint, Instagram, User2 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export default function LoginPage() {
-  const [accounts, setAccounts] = useState([]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get("accounts");
-
-    if (encoded) {
-      const decoded = JSON.parse(decodeURIComponent(encoded));
-      setAccounts(decoded);
-    }
-  }, []);
+  const { accounts, setSelectedAccount } = useAuth();
 
   async function handleLogin() {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/facebook/redirect`;
   }
+
+  function handleAccountSelect(accountId: string) {
+    const selectedAccount = accounts.find((account) => account.id === accountId);
+    if (selectedAccount) {
+      setSelectedAccount(selectedAccount);
+    }
+  }
+
+  console.log(accounts);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -34,7 +33,7 @@ export default function LoginPage() {
 
         {
           accounts.length > 0 ? (
-            <Select>
+            <Select onValueChange={handleAccountSelect}>
               <SelectTrigger>
                 <div className="flex items-center gap-2">
                   <User2 />
@@ -43,7 +42,7 @@ export default function LoginPage() {
               </SelectTrigger>
               <SelectContent>
                 {
-                  accounts.map((account: any) => (
+                  accounts.map((account) => (
                     <SelectItem key={account.id} value={account.id}>
                       <Instagram /> {account.name}
                     </SelectItem>

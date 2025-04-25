@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -43,23 +45,21 @@ class LoginController extends Controller
         }
 
         $accounts = $accountsResponse->json()['data'] ?? [];
-        $encoded = urlencode(json_encode($accounts));
+        
+        $sessionId = Str::uuid()->toString();
+        Cache::put("auth_session:$sessionId", $accounts, now()->addMinutes(10));
 
-        return redirect("http://localhost:3000/login?accounts={$encoded}");
+        return redirect("http://localhost:3000/login?session_id={$sessionId}");
     }
 
-    public function selectAccount(int $instagramPageId)
+    public function getSession($sessionId)
     {
-        $accountResponse = Http::get("https://graph.facebook.com/{$instagramPageId}?fields=instagram_business_account");
+        $accounts = Cache::get("auth_session:$sessionId");
 
-        if (!$accountResponse->successful()) {
-            return response()->json(['error' => 'Erro ao obter a conta do Instagram.'], 500);
+        if (!$accounts) {
+            return response()->json(['error' => 'Session not .'], 404);
         }
 
-        $instagramAccount = $accountResponse->json();
-
-        return response()->json([
-            'instagram_account' => $instagramAccount['instagram_business_account'] ?? null
-        ]);
+        return response()->json(['data' => $accounts]);
     }
 }

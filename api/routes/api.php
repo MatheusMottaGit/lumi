@@ -13,4 +13,4 @@ Route::post('/post/carousel', [CarouselPostController::class, 'postInstagramCaro
 
 Route::get('/facebook/redirect', [LoginController::class, 'redirect']);
 Route::get('/facebook/callback', [LoginController::class, 'callback']);
-Route::get('/instagram/account/{instagramPageId}', [LoginController::class, 'selectAccount']);
+Route::get('/session/{sessionId}', [LoginController::class, 'getSession']);
