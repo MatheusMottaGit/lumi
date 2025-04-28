@@ -1,28 +1,26 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth-context";
-import { Facebook, Fingerprint, Instagram, User2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Facebook, Fingerprint, Pointer, User2 } from "lucide-react";
 
 export default function LoginPage() {
-  const { accounts, setSelectedAccount } = useAuth();
+  const { accounts, selectedAccount, setSelectedAccount, loginSelectedAccount } = useAuth();
 
   async function handleLogin() {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/facebook/redirect`;
   }
 
   function handleAccountSelect(accountId: string) {
-    const selectedAccount = accounts.find((account) => account.id === accountId);
-    if (selectedAccount) {
-      setSelectedAccount(selectedAccount);
+    const selected = accounts.find((account) => account.id === accountId);
+    if (selected) {
+      setSelectedAccount(selected);
     }
   }
 
-  console.log(accounts);
-
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="flex items-center flex-col gap-4 bg-gray-900/10 border border-dashed p-24 rounded-lg shadow-lg">
+      <div className="flex items-center flex-col gap-4 p-24">
         <Fingerprint size={48} />
 
         <h1 className="text-4xl font-semibold">Join Lumi!</h1>
@@ -32,26 +30,42 @@ export default function LoginPage() {
         </p>
 
         {
-          accounts.length > 0 ? (
-            <Select onValueChange={handleAccountSelect}>
-              <SelectTrigger>
-                <div className="flex items-center gap-2">
-                  <User2 />
-                  <SelectValue placeholder="Select an account" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {
-                  accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      <Instagram /> {account.name}
-                    </SelectItem>
-                  ))
-                }
-              </SelectContent>
-            </Select>
+          accounts && accounts.length > 0 ? (
+            <>
+              <Select
+                onValueChange={handleAccountSelect}
+                value={selectedAccount?.id}
+              >
+                <SelectTrigger>
+                  <div className="flex items-center gap-2">
+                    <User2 />
+                    <SelectValue placeholder="Select an account" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Your linked accounts</SelectLabel>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{account.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              
+              {
+                selectedAccount && (
+                  <Button type="button" onClick={loginSelectedAccount}>
+                    Enter as {selectedAccount.name} <Pointer />
+                  </Button>
+                )
+              }
+            </>
           ) : (
-            <Button onClick={handleLogin} className="w-80 text-base">
+            <Button type="button" onClick={handleLogin} className="w-80 text-base">
               <Facebook className="mr-2" /> Sign in with Facebook
             </Button>
           )

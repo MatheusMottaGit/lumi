@@ -52,14 +52,14 @@ class LoginController extends Controller
         return redirect("http://localhost:3000/login?session_id={$sessionId}");
     }
 
-    public function getSession($sessionId)
+    public function getSessionAccounts($sessionId)
     {
         $accounts = Cache::get("auth_session:$sessionId");
 
         if (!$accounts) {
-            return response()->json(['error' => 'Session not .'], 404);
+            return response()->json(['error' => 'Session not found.'], 404);
         }
 
-        return response()->json(['data' => $accounts]);
+        return response()->json($accounts);
     }
 }

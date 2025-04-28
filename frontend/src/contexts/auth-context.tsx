@@ -2,12 +2,13 @@
 import axios from "axios";
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { setCookie } from "cookies-next";
 
 type InstagramAccount = {
   id: string;
   name: string;
   access_token: string;
-  instagram_business_account?: {
+  instagram_business_account: {
     id: string;
   };
 };
@@ -17,6 +18,7 @@ type AuthContextType = {
   selectedAccount: InstagramAccount | null;
   setSelectedAccount: (account: InstagramAccount) => void;
   accessToken: string | null;
+  loginSelectedAccount: () => void;
 };
 
 const AuthContext = createContext({} as AuthContextType);
@@ -25,7 +27,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accounts, setAccounts] = useState<InstagramAccount[]>([]);
   const [selectedAccount, setSelectedAccountState] = useState<InstagramAccount | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,24 +38,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     async function fetchSessionAccounts() {
-      try {
-        const response = await axios.get<InstagramAccount[]>(`${process.env.NEXT_PUBLIC_API_URL}/session/${sessionId}`);
-      
-        if (response.data && Array.isArray(response.data)) {
-          setAccounts(response.data);
-      
-          toast.success("Accounts fetched successfully", {
-            description: "You can now select an account to continue.",
-          });
-        } else {
-          throw new Error("Invalid data");
-        }
-      } catch (err) {
-        console.error("Fetch accounts error:", err);
+      const response = await axios.get<InstagramAccount[]>(`${process.env.NEXT_PUBLIC_API_URL}/session/${sessionId}`);
+      // console.log(response.data);
+      if(!response.data) {
         toast.error("Failed to fetch your accounts", {
           description: "Please try again.",
         });
-      }      
+      }
+
+      setAccounts(response.data);
     }
 
     if (sessionId) {
@@ -62,13 +54,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [sessionId]);
 
-  const setSelectedAccount = (account: InstagramAccount) => {
-    localStorage.setItem("selectedAccount", JSON.stringify(account));
+  function setSelectedAccount(account: InstagramAccount) {
     setSelectedAccountState(account);
   };
 
+  function loginSelectedAccount() {
+    if (selectedAccount) {
+      const userData = {
+        id: selectedAccount.id,
+        name: selectedAccount.name
+      };
+
+      setCookie("lumi:user", JSON.stringify(userData), {
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      setAccessToken(selectedAccount.access_token);
+
+      window.location.href = `${process.env.NEXT_PUBLIC_MAIN_URL}/${selectedAccount.instagram_business_account.id}?sessionId=${sessionId}`;
+    } else {
+      toast.error("Please select an account to login.");
+      return;
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ accounts, selectedAccount, setSelectedAccount, accessToken }}>
+    <AuthContext.Provider value={{ accounts, selectedAccount, setSelectedAccount, accessToken, loginSelectedAccount }}>
       {children}
     </AuthContext.Provider>
   );
