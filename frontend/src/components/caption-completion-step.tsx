@@ -17,11 +17,15 @@ export default function CaptionCompletionStep({ prompt, setPrompt, caption, setC
   const { loading, requestFn } = useRequest<CaptionCompletionResponse>("/caption/completion", { method: "POST" });
 
   async function generateCaption() {
-    await requestFn({
+    const response = await requestFn({
       data: { 
         prompt
       }
     });
+
+    if (response.success) {
+      setCaption(response.data);
+    }
   }
 
   return (

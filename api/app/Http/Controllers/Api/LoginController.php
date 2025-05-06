@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InstagramAccountDetailsRequest;
+use App\Services\CheckBusinessAccountService;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Http;
@@ -50,6 +51,12 @@ class LoginController extends Controller
 
         $linkedAccounts = $linkedAccountsResponse->json()['data'] ?? [];
 
+        $checkBusinessAccountService = new CheckBusinessAccountService($linkedAccounts);
+
+        if (!$checkBusinessAccountService->ensureIsBusinessAccount()) {
+            return $this->errorResponse("There's no linked business account.", 500);
+        }
+
         $sessionId = Str::uuid()->toString();
         Cache::put("auth_session:$sessionId", $linkedAccounts, now()->addHour());
 
@@ -69,7 +76,7 @@ class LoginController extends Controller
 
     public function getInstagramAccountData(InstagramAccountDetailsRequest $request, string $accountId)
     {
-        $validatedAccessToken = $request->validate([
+        $validatedAccessToken = $request->validate([ // for query params
             'access_token' => 'required|string',
         ]);
 
@@ -81,8 +88,6 @@ class LoginController extends Controller
         if (!$accounts) {
             return $this->errorResponse('Session not found.', 404);
         }
-
-        // Log::debug($accountId);
 
         $accountsCollection = collect($accounts);
 

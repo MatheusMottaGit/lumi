@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { BucketPartsResponse, InstagramPostResponse } from "@/app/types/main";
+import { useAuth } from "@/contexts/auth-context";
 
 interface PostInstagramStepProps {
   dirName: string
@@ -14,6 +15,8 @@ interface PostInstagramStepProps {
 
 export default function PostInstagramStep({ dirName, caption }: PostInstagramStepProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  
+  const { loggedUser } = useAuth();
 
   const { data: bucketPartsData, loading: loadingImages, requestFn: getPartsFromBucket } = useRequest<BucketPartsResponse>("/bucket/parts");
   const { loading: loadingPost, requestFn: postToInstagram } = useRequest<InstagramPostResponse>("/post/carousel");
@@ -35,13 +38,17 @@ export default function PostInstagramStep({ dirName, caption }: PostInstagramSte
   async function handlePostToInstagram() {
     await postToInstagram({
       method: "POST",
+      params: {
+        access_token: loggedUser?.accessToken,
+        instagram_id: loggedUser?.id
+      },
       data: { 
         imageOrder: selectedImages,
         chatCompletion: caption
       },
     });
   }
-
+  
   return (
     <Card className="w-full bg-background">
       <CardHeader className="flex flex-row items-center gap-4 border-b">
@@ -73,9 +80,9 @@ export default function PostInstagramStep({ dirName, caption }: PostInstagramSte
                 <div className="flex justify-center py-4">
                   <Loader className="animate-spin h-6 w-6 text-gray-500" />
                 </div>
-              ) : bucketPartsData && bucketPartsData.data.length > 0 ? (
+              ) : bucketPartsData && bucketPartsData.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2">
-                  {bucketPartsData.data.map((url, index) => (
+                  {bucketPartsData.map((url, index) => (
                     <div
                       key={index}
                       className={`relative w-full h-40 border-2 rounded-lg overflow-hidden cursor-pointer ${

@@ -27,8 +27,8 @@ export type CookiesUser = InstagramAccount & {
 }
 
 // Form Responses
-export type CaptionCompletionResponse = ApiResponse<string>;
-export type BucketPartsResponse = ApiResponse<string[]>;
-export type InstagramPostResponse = ApiResponse<string>;
-export type SplitUploadResponse = ApiResponse<string[]>;
+export type CaptionCompletionResponse = string;
+export type BucketPartsResponse = string[];
+export type InstagramPostResponse = string;
+export type SplitUploadResponse = string[];
 

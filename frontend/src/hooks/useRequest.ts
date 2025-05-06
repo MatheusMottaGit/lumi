@@ -19,6 +19,22 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (error) {
+      setLoading(false);
+      
+      toast.error(error, {
+        description: "Please try again later.",
+      });
+    }
+
+    if (data) {
+      toast.success(successMessage, {
+        description: "You can now proceed to the next step.",
+      });
+    }
+  }, [error, data, successMessage]);
+
   async function requestFn(overrideOptions?: UseRequestOptions) {
     setLoading(true);
     setError(null);
@@ -41,20 +57,6 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
 
     return response.data;
   }
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error, {
-        description: "Please try again later.",
-      });
-    }
-
-    if (data) {
-      toast.success(successMessage, {
-        description: "You can now proceed to the next step.",
-      });
-    }
-  }, [error, data, successMessage]);
 
   return {
     data,

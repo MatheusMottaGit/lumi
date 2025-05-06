@@ -15,13 +15,14 @@ export function middleware(request: NextRequest) {
     }
   
     const user = JSON.parse(cookie.value);
-    const { sessionId, id } = user;
+    const { id } = user;
+
+    if(pathname === `/${id}`) {
+      return NextResponse.next();
+    }
   
-    const currentSearchParams = request.nextUrl.searchParams;
-    const currentSessionId = currentSearchParams.get("session_id");
-  
-    if (pathname.startsWith(`/${id}`) || currentSessionId !== sessionId) {
-      return NextResponse.redirect(new URL(`/${id}?session_id=${sessionId}`, request.url));
+    if (pathname.startsWith(`/${id}`)) {
+      return NextResponse.redirect(new URL(`/${id}`, request.url));
     }
   
     return NextResponse.next();

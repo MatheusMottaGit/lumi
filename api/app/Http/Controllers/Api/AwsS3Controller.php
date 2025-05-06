@@ -7,6 +7,7 @@ use App\Http\Requests\SplitFileRequest;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
+use Log;
 
 class AwsS3Controller extends Controller
 {
@@ -89,6 +90,6 @@ class AwsS3Controller extends Controller
             $splittedImages[] = env("AWS_URL") . $img['Key'];
         }
 
-        return $this->successResponse($splittedImages, 'Object parts found!');
+        return $this->successResponse($splittedImages, 'Object parts found!', 200);
     }
 }

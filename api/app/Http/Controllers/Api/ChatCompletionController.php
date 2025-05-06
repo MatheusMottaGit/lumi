@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatCaptionRequest;
+use Log;
 use OpenAI;
 use App\Traits\ApiResponse;
 
@@ -31,6 +32,7 @@ class ChatCompletionController extends Controller
         ]);
 
         if ($completion->choices[0]->message->content) {
+            Log::debug($completion->choices[0]->message->content);
             return $this->successResponse($completion->choices[0]->message->content, 'Caption generated successfully!', 201);
         }
 

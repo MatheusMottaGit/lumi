@@ -100,18 +100,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const userData = {
       id: data.id,
       name: data.name,
-      profile_picture: data.profile_picture_url,
+      profile_picture_url: data.profile_picture_url,
       sessionId,
       accessToken
     };
 
-    setCookie(`${process.env.COOKIE_ID}`, JSON.stringify(userData), { maxAge: 60 * 60 });
+    setCookie("lumi:user", JSON.stringify(userData), { maxAge: 60 * 60 });
 
-    router.push(`${process.env.NEXT_PUBLIC_MAIN_URL}/${data.id}`);
+    window.location.href = `${process.env.NEXT_PUBLIC_MAIN_URL}/${data.id}`;
   }
 
   async function getLoggedUser() {
-    const cookie = getCookie(`${process.env.COOKIE_ID}`);
+    const cookie = getCookie("lumi:user");
     
     if (cookie) {
       const user: CookiesUser = JSON.parse(cookie as string);

@@ -38,7 +38,7 @@ export default function Home() {
           <AvatarImage src={loggedUser?.profile_picture_url} />
         </Avatar>
 
-        <span className="font-medium">{}</span>
+        <span className="font-medium">{loggedUser?.name}</span>
       </div>
 
       <form className="flex flex-col gap-3 items-center justify-center">

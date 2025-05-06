@@ -17,9 +17,14 @@ class CarouselPostController extends Controller
             return $this->errorResponse('Invalid data! Please check your input.', 422, $request->errors());
         }
 
+        $validated = $request->validate([ // for query params
+            'access_token' => 'required|string',
+            'instagram_id' => 'required|string',
+        ]);
+
+        $accessToken = $validated['access_token'];
+        $instagramAccountId = $validated['instagram_id'];
         $itemsID = [];
-        $accessToken = env("GRAPH_API_ACCESS_TOKEN");
-        $instagramAccountId = env("GRAPH_INSTAGRAM_ACCOUNT_ID");
 
         foreach ($request->imageOrder as $image) {
             $response = Http::post(env("GRAPH_API_URI") . "/" . $instagramAccountId . "/media", [

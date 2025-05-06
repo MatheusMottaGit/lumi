@@ -23,7 +23,7 @@ class SplitFileRequest extends FormRequest
     {
         return [
             'carouselFiles' => 'required|array',
-            'carouselFiles.*' => 'file|mimes:png|max:2048',
+            'carouselFiles.*' => 'file|mimes:png.jpeg|max:2048',
             'dirName' => 'required|string',
         ];
     }
