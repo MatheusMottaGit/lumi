@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
+import { ApiResponse } from '@/app/types/main';
 
 const http: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -10,11 +11,6 @@ type HttpMethod = "GET" | "POST";
 
 interface UseRequestOptions extends AxiosRequestConfig {
   method?: HttpMethod;
-}
-
-export interface ApiResponse<T> {
-  message: string;
-  data: T;
 }
 
 export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOptions) {
@@ -27,30 +23,23 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await http.request<ApiResponse<T>>({
-        url: endpoint,
-        method: overrideOptions?.method || options?.method || "GET",
-        ...options,
-        ...overrideOptions
-      });
+    const response = await http.request<ApiResponse<T>>({
+      url: endpoint,
+      method: overrideOptions?.method || options?.method || "GET",
+      ...options,
+      ...overrideOptions
+    });
 
+    if (response.data.success) {
       setData(response.data.data);
       setSuccessMessage(response.data.message);
-      return response.data;
+    } else {
+      setError(response.data.message || 'An error occurred.');
+    }
 
-    } catch (error) {
-      const axiosError = error as AxiosError<{ error: string }>;
-    
-      if (axiosError.response?.data?.error) {
-        setError(axiosError.response.data.error);
-      } else {
-        setError(axiosError.message);
-      }
-    }
-     finally {
-      setLoading(false);
-    }
+    setLoading(false);
+
+    return response.data;
   }
 
   useEffect(() => {
@@ -72,5 +61,5 @@ export function useRequest<T = unknown>(endpoint: string, options?: UseRequestOp
     loading,
     error,
     requestFn
-  }
+  };
 }

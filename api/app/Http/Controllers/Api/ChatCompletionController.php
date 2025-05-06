@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatCaptionRequest;
 use OpenAI;
+use App\Traits\ApiResponse;
 
 class ChatCompletionController extends Controller
 {
+    use ApiResponse;
+
     public function generatePostCaption(ChatCaptionRequest $request) {
         if (!$request->validated()) {
-            return response()->json([
-                'message' => 'Invalid data. Please check your input.',
-                'errors' => $request->errors()
-            ], 422);
+            return $this->errorResponse('Invalid data. Please check your input.', 422, $request->errors());
         }
 
         $prompt = $request->prompt;
@@ -31,14 +31,9 @@ class ChatCompletionController extends Controller
         ]);
 
         if ($completion->choices[0]->message->content) {
-            return response()->json([
-                'data' => $completion->choices[0]->message->content,
-                'message' => 'Caption generated successfully!'
-            ], 201);
+            return $this->successResponse($completion->choices[0]->message->content, 'Caption generated successfully!', 201);
         }
 
-        return response()->json([
-            'error' => 'Failed to generate caption...'
-        ], 400);
+        return $this->errorResponse('Failed to generate caption...', 400);
     }
 }

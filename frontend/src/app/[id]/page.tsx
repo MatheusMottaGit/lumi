@@ -17,7 +17,7 @@ export default function Home() {
   const [dirName, setDirName] = useState<string>("");
   const [caption, setCaption] = useState<string>("");
 
-  const { selectedAccount } = useAuth();
+  const { loggedUser } = useAuth();
 
   function nextStep(): void {
     if (step < 4) {
@@ -35,10 +35,10 @@ export default function Home() {
     <div className="flex flex-col w-3/4 gap-10">
       <div className="flex items-center gap-2">
         <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarImage src={loggedUser?.profile_picture_url} />
         </Avatar>
 
-        <span className="font-medium">{  }</span>
+        <span className="font-medium">{}</span>
       </div>
 
       <form className="flex flex-col gap-3 items-center justify-center">

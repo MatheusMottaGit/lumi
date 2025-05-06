@@ -5,17 +5,10 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Facebook, Fingerprint, Pointer, User2 } from "lucide-react";
 
 export default function LoginPage() {
-  const { accounts, selectedAccount, setSelectedAccount, loginSelectedAccount } = useAuth();
+  const { facebookLinkedAccounts, handleSelectFacebookPage, loginSelectedAccount, selectedFacebookPageId } = useAuth();
 
-  async function handleLogin() {
+  async function handleOAuthRedirect() {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/facebook/redirect`;
-  }
-
-  function handleAccountSelect(accountId: string) {
-    const selected = accounts.find((account) => account.id === accountId);
-    if (selected) {
-      setSelectedAccount(selected);
-    }
   }
 
   return (
@@ -30,11 +23,11 @@ export default function LoginPage() {
         </p>
 
         {
-          accounts && accounts.length > 0 ? (
+          facebookLinkedAccounts && facebookLinkedAccounts.length > 0 ? (
             <>
               <Select
-                onValueChange={handleAccountSelect}
-                value={selectedAccount?.id}
+                onValueChange={handleSelectFacebookPage}
+                value={selectedFacebookPageId ? selectedFacebookPageId : ""}
               >
                 <SelectTrigger>
                   <div className="flex items-center gap-2">
@@ -45,7 +38,7 @@ export default function LoginPage() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Your linked accounts</SelectLabel>
-                    {accounts.map((account) => (
+                    {facebookLinkedAccounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         <div className="flex items-center gap-2">
                           <span>{account.name}</span>
@@ -57,15 +50,15 @@ export default function LoginPage() {
               </Select>
               
               {
-                selectedAccount && (
+                selectedFacebookPageId && (
                   <Button type="button" onClick={loginSelectedAccount}>
-                    Enter as {selectedAccount.name} <Pointer />
+                    Enter with this account <Pointer />
                   </Button>
                 )
               }
             </>
           ) : (
-            <Button type="button" onClick={handleLogin} className="w-80 text-base">
+            <Button type="button" onClick={handleOAuthRedirect} className="w-80 text-base">
               <Facebook className="mr-2" /> Sign in with Facebook
             </Button>
           )

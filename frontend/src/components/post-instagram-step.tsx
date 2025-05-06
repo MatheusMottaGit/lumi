@@ -1,18 +1,16 @@
 import { Instagram, Loader, Search, Send } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { useState } from "react";
-import { ApiResponse, useRequest } from "@/hooks/useRequest";
+import { useRequest } from "@/hooks/useRequest";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
+import { BucketPartsResponse, InstagramPostResponse } from "@/app/types/main";
 
 interface PostInstagramStepProps {
   dirName: string
   caption: string
 }
-
-type BucketPartsResponse = ApiResponse<string[]>;
-type InstagramPostResponse = ApiResponse<string>;
 
 export default function PostInstagramStep({ dirName, caption }: PostInstagramStepProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);

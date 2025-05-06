@@ -3,15 +3,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { ApiResponse, useRequest } from "@/hooks/useRequest";
+import { useRequest } from "@/hooks/useRequest";
+import { SplitUploadResponse } from "@/app/types/main";
 
 interface SplitUploadStepProps {
   selectedFiles: File[];
   dirName: string;
   setDirName: (dirName: string) => void
 }
-
-type SplitUploadResponse = ApiResponse<string[]>;
 
 export default function SplitUploadStep({ selectedFiles, dirName, setDirName }: SplitUploadStepProps) {
   const { loading, requestFn } = useRequest<SplitUploadResponse>("/split_upload", { method: "POST" });

@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InstagramAccountDetailsRequest;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use App\Traits\ApiResponse;
 
 class LoginController extends Controller
 {
+    use ApiResponse; // Adiciona o trait ApiResponse
+
     public function redirect()
     {
         return Socialite::driver('facebook')
@@ -30,36 +34,72 @@ class LoginController extends Controller
         $user = Socialite::driver('facebook')->stateless()->user();
         $token = $user->token;
 
-        $profileResponse = Http::withToken($token)->get('https://graph.facebook.com/me?fields=id');
+        $profileResponse = Http::withToken($token)->get(env("GRAPH_API_URI") . '/me?fields=id');
 
         if (!$profileResponse->successful()) {
-            return redirect("http://localhost:3000/login?error=perfil_nao_encontrado");
+            return redirect("http://localhost:3000/login?errorResponse=profile_not_found");
         }
 
-        $facebookPageId = $profileResponse->json()['id'];
+        $facebookAccountId = $profileResponse->json()['id'];
 
-        $accountsResponse = Http::withToken($token)->get("https://graph.facebook.com/{$facebookPageId}/accounts?fields=id,name,access_token,instagram_business_account");
+        $linkedAccountsResponse = Http::withToken($token)->get(env("GRAPH_API_URI") . "/{$facebookAccountId}/accounts?fields=access_token,tasks,name,id,instagram_business_account");
 
-        if (!$accountsResponse->successful()) {
-            return redirect("http://localhost:3000/login?error=paginas_nao_encontradas");
+        if (!$linkedAccountsResponse->successful()) {
+            return redirect("http://localhost:3000/login?errorResponse=pages_not_found");
         }
 
-        $accounts = $accountsResponse->json()['data'] ?? [];
-        
+        $linkedAccounts = $linkedAccountsResponse->json()['data'] ?? [];
+
         $sessionId = Str::uuid()->toString();
-        Cache::put("auth_session:$sessionId", $accounts, now()->addMinutes(10));
+        Cache::put("auth_session:$sessionId", $linkedAccounts, now()->addHour());
 
         return redirect("http://localhost:3000/login?session_id={$sessionId}");
     }
 
-    public function getSessionAccounts($sessionId)
+    public function getSessionAccounts(string $sessionId)
     {
         $accounts = Cache::get("auth_session:$sessionId");
 
         if (!$accounts) {
-            return response()->json(['error' => 'Session not found.'], 404);
+            return $this->errorResponse('Accounts not found.', 404);
         }
 
-        return response()->json($accounts);
+        return $this->successResponse($accounts, 'Accounts retrieved successfully.');
+    }
+
+    public function getInstagramAccountData(InstagramAccountDetailsRequest $request, string $accountId)
+    {
+        $validatedAccessToken = $request->validate([
+            'access_token' => 'required|string',
+        ]);
+
+        $accessToken = $validatedAccessToken['access_token'];
+        $sessionId = $request->session_id;
+
+        $accounts = Cache::get("auth_session:$sessionId");
+
+        if (!$accounts) {
+            return $this->errorResponse('Session not found.', 404);
+        }
+
+        // Log::debug($accountId);
+
+        $accountsCollection = collect($accounts);
+
+        $instagramAccount = $accountsCollection->first(function($account) use ($accountId) {
+            return isset($account['instagram_business_account']['id']) && $account['instagram_business_account']['id'] === $accountId; 
+        });
+
+        if (!$instagramAccount) {
+            return $this->errorResponse('Account not found.', 404);
+        }
+
+        $instagramAccountResponse = Http::withToken($accessToken)->get(env("GRAPH_API_URI") . "/{$accountId}?fields=id,name,profile_picture_url");
+
+        if (!$instagramAccountResponse->successful()) {
+            return $this->errorResponse('Instagram account not found.', 404);
+        }
+
+        return $this->successResponse($instagramAccountResponse->json(), 'Instagram account data retrieved successfully.', 200);
     }
 }

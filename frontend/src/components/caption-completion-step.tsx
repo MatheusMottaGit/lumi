@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { ApiResponse, useRequest } from "@/hooks/useRequest";
+import { useRequest } from "@/hooks/useRequest";
+import { CaptionCompletionResponse } from "@/app/types/main";
 
 interface CaptionCompletionStepProps {
   prompt: string;
@@ -11,8 +12,6 @@ interface CaptionCompletionStepProps {
   caption: string;
   setCaption: (prompt: string) => void;
 }
-
-type CaptionCompletionResponse = ApiResponse<string>;
 
 export default function CaptionCompletionStep({ prompt, setPrompt, caption, setCaption }: CaptionCompletionStepProps) {
   const { loading, requestFn } = useRequest<CaptionCompletionResponse>("/caption/completion", { method: "POST" });
