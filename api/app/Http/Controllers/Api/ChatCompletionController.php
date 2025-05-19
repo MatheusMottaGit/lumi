@@ -32,7 +32,6 @@ class ChatCompletionController extends Controller
         ]);
 
         if ($completion->choices[0]->message->content) {
-            Log::debug($completion->choices[0]->message->content);
             return $this->successResponse($completion->choices[0]->message->content, 'Caption generated successfully!', 201);
         }
 

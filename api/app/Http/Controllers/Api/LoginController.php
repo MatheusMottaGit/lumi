@@ -38,7 +38,7 @@ class LoginController extends Controller
         $profileResponse = Http::withToken($token)->get(env("GRAPH_API_URI") . '/me?fields=id');
 
         if (!$profileResponse->successful()) {
-            return redirect("http://localhost:3000/login?errorResponse=profile_not_found");
+            return redirect(env("WEB_URL") . "/login?errorResponse=profile_not_found");
         }
 
         $facebookAccountId = $profileResponse->json()['id'];
@@ -46,7 +46,7 @@ class LoginController extends Controller
         $linkedAccountsResponse = Http::withToken($token)->get(env("GRAPH_API_URI") . "/{$facebookAccountId}/accounts?fields=access_token,tasks,name,id,instagram_business_account");
 
         if (!$linkedAccountsResponse->successful()) {
-            return redirect("http://localhost:3000/login?errorResponse=pages_not_found");
+            return redirect(env("WEB_URL") . "/login?errorResponse=pages_not_found");
         }
 
         $linkedAccounts = $linkedAccountsResponse->json()['data'] ?? [];
@@ -60,7 +60,7 @@ class LoginController extends Controller
         $sessionId = Str::uuid()->toString();
         Cache::put("auth_session:$sessionId", $linkedAccounts, now()->addHour());
 
-        return redirect("http://localhost:3000/login?session_id={$sessionId}");
+        return redirect(env("WEB_URL") . "/login?session_id={$sessionId}");
     }
 
     public function getSessionAccounts(string $sessionId)
@@ -76,11 +76,11 @@ class LoginController extends Controller
 
     public function getInstagramAccountData(InstagramAccountDetailsRequest $request, string $accountId)
     {
-        $validatedAccessToken = $request->validate([ // for query params
+        $accessTokenQueryParam = $request->validate([ // for query params
             'access_token' => 'required|string',
         ]);
 
-        $accessToken = $validatedAccessToken['access_token'];
+        $accessToken = $accessTokenQueryParam['access_token'];
         $sessionId = $request->session_id;
 
         $accounts = Cache::get("auth_session:$sessionId");

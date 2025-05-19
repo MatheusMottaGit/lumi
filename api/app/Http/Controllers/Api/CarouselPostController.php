@@ -17,7 +17,7 @@ class CarouselPostController extends Controller
             return $this->errorResponse('Invalid data! Please check your input.', 422, $request->errors());
         }
 
-        $validated = $request->validate([ // for query params
+        $validated = $request->validate([ // for query parameters
             'access_token' => 'required|string',
             'instagram_id' => 'required|string',
         ]);
@@ -32,8 +32,6 @@ class CarouselPostController extends Controller
                 'image_url' => $image,
                 'access_token' => $accessToken
             ]);
-
-            Log::debug($response);
             
             if ($response->successful()) {
                 $itemsID[] = $response->json()['id'];
